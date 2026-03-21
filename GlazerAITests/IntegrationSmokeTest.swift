@@ -25,6 +25,7 @@ final class SpyAIBackendService: AIBackendService {
 
 // MARK: - Test
 
+@available(macOS 14.0, *)
 @MainActor
 final class IntegrationSmokeTest: XCTestCase {
 

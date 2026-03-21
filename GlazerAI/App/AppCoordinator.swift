@@ -2,24 +2,20 @@
 // GlazerAI
 //
 // Central coordinator that wires together all subsystems:
-// menu bar, global hotkey, snipping overlay, screen capture, and AI backend.
+// menu bar, snipping overlay, screen capture, and AI backend.
 
 import AppKit
-import ApplicationServices
-import CoreGraphics
 import Foundation
 import ScreenCaptureKit
 
 /// Owns and coordinates all major Glazer AI subsystems.
-///
-/// Inject dependencies via the initialiser to enable unit testing.
+@available(macOS 14.0, *)
 @MainActor
 final class AppCoordinator {
 
     // MARK: - Dependencies
 
     private let menuBarController: MenuBarController
-    private let hotkeyManager: GlobalHotkeyManager
     private let snippingWindowController: SnippingWindowController
     private let captureService: ScreenCaptureService
     private let backendService: AIBackendService
@@ -27,15 +23,9 @@ final class AppCoordinator {
 
     // MARK: - Init
 
-    /// Creates the coordinator with the given service implementations.
-    ///
-    /// - Parameters:
-    ///   - backendService: The AI backend to receive captured images.
-    ///     Defaults to ``MockAIBackendService``.
     init(backendService: AIBackendService = MockAIBackendService()) {
         self.backendService           = backendService
         self.menuBarController        = MenuBarController()
-        self.hotkeyManager            = GlobalHotkeyManager()
         self.snippingWindowController = SnippingWindowController()
         self.captureService           = ScreenCaptureService()
         self.settingsWindowController = SettingsWindowController(onSave: { _ in })
@@ -46,7 +36,7 @@ final class AppCoordinator {
 
     // MARK: - Public API
 
-    /// Activates the snipping overlay. Called by the menu item and global hotkey.
+    /// Activates the snipping overlay.
     func startCapture() {
         snippingWindowController.present()
     }
@@ -56,61 +46,37 @@ final class AppCoordinator {
     private func wire() {
         menuBarController.delegate        = self
         snippingWindowController.delegate = self
-
-        let shortcut = loadShortcut()
-        let registered = hotkeyManager.register(shortcut: shortcut) { [weak self] in
-            MainActor.assumeIsolated {
-                self?.startCapture()
-            }
-        }
-
-        // If the tap failed the OS hasn't granted Accessibility yet —
-        // trigger the native system permission prompt.
-        if !registered {
-            // kAXTrustedCheckOptionPrompt = "AXTrustedCheckOptionPrompt"
-            let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
-            AXIsProcessTrustedWithOptions(options)
-        }
     }
 
     private func requestPermissionsOnLaunch() {
-        // SCShareableContent.current is the ScreenCaptureKit call that registers
-        // the app with TCC on macOS 12.3+ and shows the native permission prompt.
-        // Without touching an SCK API, the app never appears in System Settings
-        // → Screen Recording, even if CGRequestScreenCaptureAccess() is called.
+        // LSUIElement apps run as .accessory (background-only). macOS suppresses TCC
+        // permission dialogs for background apps. We temporarily surface the app as a
+        // regular app so the Screen Recording prompt is shown, then immediately hide it.
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
         Task.detached {
+            // SCShareableContent.current registers the app with TCC and shows
+            // the native Screen Recording permission dialog on first launch.
             _ = try? await SCShareableContent.current
-        }
-    }
 
-    private func loadShortcut() -> KeyboardShortcut {
-        guard let data     = UserDefaults.standard.data(forKey: Constants.shortcutDefaultsKey),
-              let shortcut = try? JSONDecoder().decode(KeyboardShortcut.self, from: data)
-        else {
-            return .defaultShortcut
+            await MainActor.run { NSApp.setActivationPolicy(.accessory) }
         }
-        return shortcut
-    }
-
-    private func saveShortcut(_ shortcut: KeyboardShortcut) {
-        guard let data = try? JSONEncoder().encode(shortcut) else { return }
-        UserDefaults.standard.set(data, forKey: Constants.shortcutDefaultsKey)
     }
 
     private func handleCaptureError(_ error: Error) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = "Capture Failed"
-            alert.informativeText = error.localizedDescription
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
-        }
+        let alert = NSAlert()
+        alert.messageText = "Capture Failed"
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 }
 
 // MARK: - MenuBarControllerDelegate
 
+@available(macOS 14.0, *)
 extension AppCoordinator: MenuBarControllerDelegate {
 
     func menuBarControllerDidRequestCapture(_ controller: MenuBarController) {
@@ -124,6 +90,7 @@ extension AppCoordinator: MenuBarControllerDelegate {
 
 // MARK: - SnippingWindowControllerDelegate
 
+@available(macOS 14.0, *)
 extension AppCoordinator: SnippingWindowControllerDelegate {
 
     func snippingWindowController(
@@ -132,7 +99,7 @@ extension AppCoordinator: SnippingWindowControllerDelegate {
     ) {
         Task {
             do {
-                let imageData = try captureService.capture(rect: rect)
+                let imageData = try await captureService.capture(rect: rect)
                 try await backendService.send(image: imageData)
             } catch {
                 handleCaptureError(error)
@@ -141,6 +108,6 @@ extension AppCoordinator: SnippingWindowControllerDelegate {
     }
 
     func snippingWindowControllerDidCancel(_ controller: SnippingWindowController) {
-        // No-op: user cancelled, nothing to do.
+        // No-op.
     }
 }

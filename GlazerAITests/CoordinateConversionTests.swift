@@ -4,9 +4,10 @@
 import XCTest
 @testable import GlazerAI
 
+@available(macOS 14.0, *)
 final class CoordinateConversionTests: XCTestCase {
 
-    private let service = ScreenCaptureService()
+    // Tests the coordinate conversion formula directly — no service methods called.
 
     /// Verifies that the Y-axis is flipped and origin adjusted for a known screen height.
     func test_convertToCGScreenCoordinates_flipsYAxis() {

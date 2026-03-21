@@ -29,13 +29,19 @@ struct GlazerAIApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The single coordinator instance for the lifetime of the app.
-    private var coordinator: AppCoordinator?
+    @available(macOS 14.0, *)
+    private var coordinator: AppCoordinator? {
+        get { _coordinator as? AppCoordinator }
+        set { _coordinator = newValue }
+    }
+    private var _coordinator: AnyObject?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Ensure no Dock icon appears at runtime (belt-and-suspenders alongside LSUIElement).
-        NSApp.setActivationPolicy(.accessory)
-
-        coordinator = AppCoordinator()
+        // Note: activation policy is set to .accessory inside AppCoordinator
+        // after the permission prompt completes, so we do NOT set it here.
+        if #available(macOS 14.0, *) {
+            coordinator = AppCoordinator()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

@@ -1,11 +1,13 @@
 // ScreenCaptureService.swift
 // GlazerAI
 //
-// Wraps CGWindowListCreateImage to capture a screen region and return PNG data.
+// Captures a screen region using ScreenCaptureKit (macOS 14+).
+// Excludes the Glazer AI overlay from the captured content.
 
 import AppKit
 import CoreGraphics
 import Foundation
+import ScreenCaptureKit
 
 // MARK: - Errors
 
@@ -15,7 +17,7 @@ enum ScreenCaptureError: LocalizedError {
     case permissionDenied
     /// The provided rectangle had zero or negative area after normalisation.
     case invalidRect
-    /// Core Graphics failed to produce an image.
+    /// Could not find a matching display or SCShareableContent failed.
     case captureFailure
     /// PNG conversion of the captured image failed.
     case pngConversionFailure
@@ -23,6 +25,7 @@ enum ScreenCaptureError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
+            // swiftlint:disable:next line_length
             return "Screen Recording permission is required. Go to System Settings → Privacy & Security → Screen Recording and enable Glazer AI, then try again."
         case .invalidRect:
             return "The selected region is too small to capture."
@@ -37,59 +40,68 @@ enum ScreenCaptureError: LocalizedError {
 // MARK: - Service
 
 /// Captures a user-defined rectangular region of the screen and returns PNG data.
-final class ScreenCaptureService {
+///
+/// Uses `SCScreenshotManager` (ScreenCaptureKit) for proper permission integration
+/// and to exclude the Glazer AI overlay window from the captured content.
+@available(macOS 14.0, *)
+final class ScreenCaptureService: Sendable {
 
     // MARK: - Public API
 
-    /// Captures the region described by `rect` (in AppKit screen coordinates,
-    /// where the origin is bottom-left of the main display) and returns PNG data.
-    ///
-    /// - Parameter rect: The region to capture in AppKit screen coordinates.
-    /// - Returns: PNG-encoded `Data` of the captured region.
-    /// - Throws: ``ScreenCaptureError`` on failure.
-    func capture(rect: CGRect) throws -> Data {
+    /// Captures `rect` (AppKit screen coordinates, origin bottom-left of main display)
+    /// and returns PNG-encoded data.
+    func capture(rect: CGRect) async throws -> Data {
         guard CGPreflightScreenCaptureAccess() else {
             throw ScreenCaptureError.permissionDenied
         }
 
         let normalised = normalise(rect: rect)
-
         guard normalised.width  >= Constants.minimumSelectionSize,
               normalised.height >= Constants.minimumSelectionSize else {
             throw ScreenCaptureError.invalidRect
         }
 
-        let cgRect = convertToCGScreenCoordinates(appKitRect: normalised)
+        let content = try await SCShareableContent.current
 
-        guard let cgImage = CGWindowListCreateImage(
-            cgRect,
-            .optionOnScreenOnly,
-            kCGNullWindowID,
-            [.boundsIgnoreFraming, .bestResolution]
-        ) else {
-            throw ScreenCaptureError.captureFailure
-        }
+        let nsScreen = screen(containing: normalised)
+        let scDisplay = scDisplay(matching: nsScreen, from: content)
+
+        // Exclude this app's overlay so it doesn't appear in the screenshot.
+        let ownApp = content.applications.first(where: {
+            $0.bundleIdentifier == Bundle.main.bundleIdentifier
+        })
+        let filter = SCContentFilter(
+            display: scDisplay,
+            excludingApplications: ownApp.map { [$0] } ?? [],
+            exceptingWindows: []
+        )
+
+        let displayRect = rectInDisplayCoordinates(normalised, screen: nsScreen)
+        let scaleFactor = max(1, Int(filter.pointPixelScale))
+
+        let config = SCStreamConfiguration()
+        config.sourceRect = displayRect
+        config.width = max(1, Int(displayRect.width) * scaleFactor)
+        config.height = max(1, Int(displayRect.height) * scaleFactor)
+        config.colorSpaceName = CGColorSpace.sRGB
+        config.showsCursor = false
+
+        let cgImage = try await SCScreenshotManager.captureImage(
+            contentFilter: filter,
+            configuration: config
+        )
 
         let nsImage = NSImage(cgImage: cgImage, size: normalised.size)
         guard let pngData = nsImage.pngData() else {
             throw ScreenCaptureError.pngConversionFailure
         }
-
         return pngData
     }
 
-    // MARK: - Coordinate Conversion (internal for testing)
+    // MARK: - Internal helpers (tested)
 
-    /// Normalises a rectangle so that width and height are always positive.
-    ///
-    /// A drag from bottom-right to top-left produces negative dimensions;
-    /// this function corrects the origin so the rect is well-formed.
-    ///
-    /// - Parameter rect: Any `CGRect`, possibly with negative dimensions.
-    /// - Returns: An equivalent `CGRect` with non-negative width and height.
+    /// Returns the rect with positive width and height.
     func normalise(rect: CGRect) -> CGRect {
-        // Use rect.size.width/height — CGRect.width/height return absolute values
-        // and cannot be used to detect a negative dimension.
         CGRect(
             x: rect.size.width  < 0 ? rect.origin.x + rect.size.width  : rect.origin.x,
             y: rect.size.height < 0 ? rect.origin.y + rect.size.height : rect.origin.y,
@@ -98,20 +110,29 @@ final class ScreenCaptureService {
         )
     }
 
-    /// Converts an AppKit screen-coordinate rect (origin at bottom-left of main
-    /// display) to a Core Graphics rect (origin at top-left of main display).
-    ///
-    /// - Parameter appKitRect: Rectangle in AppKit/NSScreen coordinates.
-    /// - Returns: Rectangle in CG screen coordinates.
-    func convertToCGScreenCoordinates(appKitRect: CGRect) -> CGRect {
-        guard let screenHeight = NSScreen.main?.frame.height else {
-            return appKitRect
-        }
+    // MARK: - Private
+
+    /// Returns the NSScreen that contains the rect's midpoint (falls back to main).
+    private func screen(containing rect: CGRect) -> NSScreen {
+        let mid = CGPoint(x: rect.midX, y: rect.midY)
+        return NSScreen.screens.first(where: { $0.frame.contains(mid) }) ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    /// Finds the SCDisplay whose displayID matches `screen`. Falls back to first display.
+    private func scDisplay(matching screen: NSScreen, from content: SCShareableContent) -> SCDisplay {
+        let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
+        return content.displays.first(where: { $0.displayID == id?.uint32Value }) ?? content.displays[0]
+    }
+
+    /// Converts a rect from AppKit screen coordinates (origin bottom-left) to
+    /// display-local ScreenCaptureKit coordinates (origin top-left of that display).
+    private func rectInDisplayCoordinates(_ rect: CGRect, screen: NSScreen) -> CGRect {
+        let screenH = screen.frame.height + screen.frame.minY
         return CGRect(
-            x: appKitRect.origin.x,
-            y: screenHeight - appKitRect.origin.y - appKitRect.height,
-            width: appKitRect.width,
-            height: appKitRect.height
+            x: rect.origin.x - screen.frame.minX,
+            y: screenH - rect.origin.y - rect.height,
+            width: rect.width,
+            height: rect.height
         )
     }
 }
@@ -119,9 +140,8 @@ final class ScreenCaptureService {
 // MARK: - NSImage PNG Helper
 
 private extension NSImage {
-    /// Returns PNG-encoded data for this image, or `nil` on failure.
     func pngData() -> Data? {
-        guard let tiff = tiffRepresentation,
+        guard let tiff   = tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
         return bitmap.representation(using: .png, properties: [:])
     }
