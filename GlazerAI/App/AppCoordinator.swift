@@ -5,6 +5,7 @@
 // menu bar, global hotkey, snipping overlay, screen capture, and AI backend.
 
 import AppKit
+import ApplicationServices
 import Foundation
 
 /// Owns and coordinates all major Glazer AI subsystems.
@@ -21,8 +22,6 @@ final class AppCoordinator {
     private let captureService: ScreenCaptureService
     private let backendService: AIBackendService
     private let settingsWindowController: SettingsWindowController
-    private let permissionService: ScreenRecordingPermissionService
-    private var permissionWindowController: PermissionWindowController?
 
     // MARK: - Init
 
@@ -32,16 +31,14 @@ final class AppCoordinator {
     ///   - backendService: The AI backend to receive captured images.
     ///     Defaults to ``MockAIBackendService``.
     init(backendService: AIBackendService = MockAIBackendService()) {
-        self.backendService              = backendService
-        self.menuBarController           = MenuBarController()
-        self.hotkeyManager               = GlobalHotkeyManager()
-        self.snippingWindowController    = SnippingWindowController()
-        self.captureService              = ScreenCaptureService()
-        self.settingsWindowController    = SettingsWindowController(onSave: { _ in })
-        self.permissionService           = ScreenRecordingPermissionService()
+        self.backendService           = backendService
+        self.menuBarController        = MenuBarController()
+        self.hotkeyManager            = GlobalHotkeyManager()
+        self.snippingWindowController = SnippingWindowController()
+        self.captureService           = ScreenCaptureService()
+        self.settingsWindowController = SettingsWindowController(onSave: { _ in })
 
         wire()
-        checkPermissionOnLaunch()
     }
 
     // MARK: - Public API
@@ -54,8 +51,8 @@ final class AppCoordinator {
     // MARK: - Private
 
     private func wire() {
-        menuBarController.delegate         = self
-        snippingWindowController.delegate  = self
+        menuBarController.delegate        = self
+        snippingWindowController.delegate = self
 
         let shortcut = loadShortcut()
         let registered = hotkeyManager.register(shortcut: shortcut) { [weak self] in
@@ -63,8 +60,13 @@ final class AppCoordinator {
                 self?.startCapture()
             }
         }
+
+        // If the tap failed the OS hasn't granted Accessibility yet —
+        // trigger the native system permission prompt.
         if !registered {
-            promptForAccessibilityPermission()
+            // kAXTrustedCheckOptionPrompt = "AXTrustedCheckOptionPrompt"
+            let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
+            AXIsProcessTrustedWithOptions(options)
         }
     }
 
@@ -80,33 +82,6 @@ final class AppCoordinator {
     private func saveShortcut(_ shortcut: KeyboardShortcut) {
         guard let data = try? JSONEncoder().encode(shortcut) else { return }
         UserDefaults.standard.set(data, forKey: Constants.shortcutDefaultsKey)
-    }
-
-    private func promptForAccessibilityPermission() {
-        let alert = NSAlert()
-        alert.messageText = "Accessibility Permission Required"
-        alert.informativeText = """
-            The global shortcut ⌘⇧2 requires Accessibility access so it fires \
-            even when Glazer AI is in the background.
-
-            Please grant access in System Settings → Privacy & Security → \
-            Accessibility, then relaunch Glazer AI.
-            """
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-        alert.alertStyle = .warning
-
-        if alert.runModal() == .alertFirstButtonReturn,
-           let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func checkPermissionOnLaunch() {
-        guard !permissionService.isGranted else { return }
-        let controller = PermissionWindowController(permissionService: permissionService)
-        permissionWindowController = controller
-        controller.present()
     }
 
     private func handleCaptureError(_ error: Error) {

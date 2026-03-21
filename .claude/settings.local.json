@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Read(//Users/saaivigneshp/.claude/**)",
+      "Read(//System/Library/Sounds/**)",
+      "Bash(xcodebuild -version)",
+      "Bash(swift --version)",
+      "Bash(swiftlint --version)",
+      "Bash(git --version)",
+      "Bash(sed -i '' 's/Glazer AI\\\\.xcodeproj/GlazerAI.xcodeproj/g' /Users/saaivigneshp/repos/glazer-ai/SPEC.md)",
+      "Bash(sed -i '' 's|├── Glazer AI/|├── GlazerAI/|g; s|GlazerAI/                          # App|GlazerAI/                        # App|g' /Users/saaivigneshp/repos/glazer-ai/SPEC.md)",
+      "Bash(sed -i '' 's/Glazer AIApp\\\\.swift/GlazerAIApp.swift/g; s/Glazer AITests\\\\//GlazerAITests\\\\//g; s/scheme Glazer AITests/scheme GlazerAITests/g; s/scheme Glazer AI/scheme GlazerAI/g; s/cd Glazer AI/cd glazer-ai/g; s/open Glazer AI\\\\.xcodeproj/open GlazerAI.xcodeproj/g; s|GlazerAI\\\\//|Glazer AI\\\\//|g' /Users/saaivigneshp/repos/glazer-ai/SPEC.md)",
+      "Bash(sed -i '' 's|^Glazer AI/$|GlazerAI/|g' /Users/saaivigneshp/repos/glazer-ai/SPEC.md)",
+      "Bash(chmod:*)",
+      "Bash(xcodegen generate:*)"
+    ]
+  }
+}

@@ -11,19 +11,16 @@
 		0E3038B18BB94ABBE1B6A85D /* GlobalHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */; };
 		18E1EE28CC2DE49B81CF3581 /* ScreenCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E6A3F978BC1E781A72AAFF /* ScreenCaptureService.swift */; };
 		255DE60A17E937B70606B3EC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E34A7908630963A4EB3012 /* Constants.swift */; };
-		49F9147602F0CA7495538CA5 /* ScreenRecordingPermissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D68B3CF9C28BAF073356ED6 /* ScreenRecordingPermissionService.swift */; };
 		59C280BBCA7869A9C9CAB45D /* GlobalHotkeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */; };
 		6229C9E73BE224AF8CC4F103 /* GlazerAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1991914E41ED836086E01FA7 /* GlazerAIApp.swift */; };
 		6BFCA9BB55E17AC90453B4FF /* IntegrationSmokeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC4C48418C477B9FE2381B2A /* IntegrationSmokeTest.swift */; };
 		6CB6249458209B736CAD106F /* SnippingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */; };
 		7CDEFE6167657225E53A8C00 /* MockAIBackendServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */; };
 		85A00513AFD3E4328682CDBA /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */; };
-		880B0D838A308C7DF09F3EEB /* PermissionCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFA67ED49F07FBCEFCBDBFC /* PermissionCheckView.swift */; };
 		8AA901654677E394E2E7BC1D /* MockAIBackendService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D51A2BEF291BF14A33DC680E /* MockAIBackendService.swift */; };
 		8CD0ABF47BC53CE62B8270CC /* SnippingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA7E5CA7EB21EA390CE1C7DE /* SnippingView.swift */; };
 		A64DC22D03A4BB4371DBDC39 /* RectCalculationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF11CB4CCE5A7C60322C060 /* RectCalculationTests.swift */; };
 		ABFD33FBF38C468C0FE54210 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */; };
-		AC3361C3EE2A081BC9652BC7 /* PermissionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28D7324A5CD77D8E765B0609 /* PermissionWindowController.swift */; };
 		B23F59D605EA5CD029434845 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E659A65780F8E11474DDB7 /* MenuBarController.swift */; };
 		B4F9A14B26485F85C21ADDE9 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96E20713B22E332B0A41DBFF /* AppCoordinator.swift */; };
 		C7489F370AA56A6C744EB480 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E6ED6F4A1D5778766FFC9518 /* Assets.xcassets */; };
@@ -47,15 +44,12 @@
 		128395F0AC6B8191EB0B269A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1991914E41ED836086E01FA7 /* GlazerAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlazerAIApp.swift; sourceTree = "<group>"; };
 		1EF11CB4CCE5A7C60322C060 /* RectCalculationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectCalculationTests.swift; sourceTree = "<group>"; };
-		28D7324A5CD77D8E765B0609 /* PermissionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionWindowController.swift; sourceTree = "<group>"; };
 		2A4FA588D74C65B38E4C8A5D /* UserDefaultsShortcutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsShortcutTests.swift; sourceTree = "<group>"; };
 		2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManagerTests.swift; sourceTree = "<group>"; };
 		30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippingWindowController.swift; sourceTree = "<group>"; };
 		3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIBackendServiceTests.swift; sourceTree = "<group>"; };
 		39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
 		434B05EEFDC1CE1F6CB7BB3B /* GlazerAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlazerAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4EFA67ED49F07FBCEFCBDBFC /* PermissionCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionCheckView.swift; sourceTree = "<group>"; };
-		6D68B3CF9C28BAF073356ED6 /* ScreenRecordingPermissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenRecordingPermissionService.swift; sourceTree = "<group>"; };
 		6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManager.swift; sourceTree = "<group>"; };
 		96E20713B22E332B0A41DBFF /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
@@ -169,7 +163,6 @@
 				8CCCAF1C323BF3E9B71974F2 /* Capture */,
 				7E8D48FDEAF556EA2A796A35 /* Hotkey */,
 				F244E715DCFF892D854D5AEE /* MenuBar */,
-				FC3F01B4FB90689589498A1E /* Permissions */,
 				A6BBFF9E0A7C5D85F4AC5244 /* Resources */,
 				E2256B6DD4ACF51C0CF02426 /* Settings */,
 				374B8F8AFB22E4D763F54A8B /* Snipping */,
@@ -194,16 +187,6 @@
 				F0E659A65780F8E11474DDB7 /* MenuBarController.swift */,
 			);
 			path = MenuBar;
-			sourceTree = "<group>";
-		};
-		FC3F01B4FB90689589498A1E /* Permissions */ = {
-			isa = PBXGroup;
-			children = (
-				4EFA67ED49F07FBCEFCBDBFC /* PermissionCheckView.swift */,
-				28D7324A5CD77D8E765B0609 /* PermissionWindowController.swift */,
-				6D68B3CF9C28BAF073356ED6 /* ScreenRecordingPermissionService.swift */,
-			);
-			path = Permissions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -325,10 +308,7 @@
 				0E3038B18BB94ABBE1B6A85D /* GlobalHotkeyManager.swift in Sources */,
 				B23F59D605EA5CD029434845 /* MenuBarController.swift in Sources */,
 				8AA901654677E394E2E7BC1D /* MockAIBackendService.swift in Sources */,
-				880B0D838A308C7DF09F3EEB /* PermissionCheckView.swift in Sources */,
-				AC3361C3EE2A081BC9652BC7 /* PermissionWindowController.swift in Sources */,
 				18E1EE28CC2DE49B81CF3581 /* ScreenCaptureService.swift in Sources */,
-				49F9147602F0CA7495538CA5 /* ScreenRecordingPermissionService.swift in Sources */,
 				D9AB9EC3C96FA54295DE0724 /* SettingsView.swift in Sources */,
 				ABFD33FBF38C468C0FE54210 /* SettingsWindowController.swift in Sources */,
 				85A00513AFD3E4328682CDBA /* ShortcutRecorderView.swift in Sources */,
