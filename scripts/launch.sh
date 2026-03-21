@@ -3,6 +3,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$SCRIPT_DIR/.."
+BUNDLE_ID="com.glazerai.app"
+
+# Kill any running instance before replacing it.
+pkill -x GlazerAI 2>/dev/null || true
 
 echo "Building GlazerAI..."
 xcodebuild \
@@ -18,6 +22,11 @@ if [[ -z "$APP" ]]; then
   echo "Error: could not find built GlazerAI.app" >&2
   exit 1
 fi
+
+# Reset TCC permission entries so each launch tests the fresh-grant flow.
+echo "Resetting permissions for $BUNDLE_ID..."
+tccutil reset Accessibility "$BUNDLE_ID"
+tccutil reset ScreenCapture "$BUNDLE_ID"
 
 echo "Launching $APP"
 open "$APP"
