@@ -8,6 +8,7 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
+import ScreenCaptureKit
 
 /// Owns and coordinates all major Glazer AI subsystems.
 ///
@@ -73,8 +74,13 @@ final class AppCoordinator {
     }
 
     private func requestPermissionsOnLaunch() {
-        // Triggers the native Screen Recording permission prompt if not yet granted.
-        CGRequestScreenCaptureAccess()
+        // SCShareableContent.current is the ScreenCaptureKit call that registers
+        // the app with TCC on macOS 12.3+ and shows the native permission prompt.
+        // Without touching an SCK API, the app never appears in System Settings
+        // → Screen Recording, even if CGRequestScreenCaptureAccess() is called.
+        Task.detached {
+            _ = try? await SCShareableContent.current
+        }
     }
 
     private func loadShortcut() -> KeyboardShortcut {
