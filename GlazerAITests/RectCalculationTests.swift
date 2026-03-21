@@ -4,7 +4,6 @@
 import XCTest
 @testable import GlazerAI
 
-@available(macOS 14.0, *)
 final class RectCalculationTests: XCTestCase {
 
     private let service = ScreenCaptureService()

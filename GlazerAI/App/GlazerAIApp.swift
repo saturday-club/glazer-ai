@@ -29,19 +29,12 @@ struct GlazerAIApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The single coordinator instance for the lifetime of the app.
-    @available(macOS 14.0, *)
-    private var coordinator: AppCoordinator? {
-        get { _coordinator as? AppCoordinator }
-        set { _coordinator = newValue }
-    }
-    private var _coordinator: AnyObject?
+    private var coordinator: AppCoordinator?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Note: activation policy is set to .accessory inside AppCoordinator
         // after the permission prompt completes, so we do NOT set it here.
-        if #available(macOS 14.0, *) {
-            coordinator = AppCoordinator()
-        }
+        coordinator = AppCoordinator()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

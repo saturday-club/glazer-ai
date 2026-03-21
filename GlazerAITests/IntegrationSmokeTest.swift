@@ -1,9 +1,7 @@
 // IntegrationSmokeTest.swift
 // GlazerAITests
 //
-// Lightweight smoke test: instantiates AppCoordinator with a spy backend,
-// fires the snip action with a mock capture, and verifies the backend
-// receives a non-empty Data object.
+// Lightweight smoke tests verifying the pipeline components work together.
 
 import XCTest
 @testable import GlazerAI
@@ -23,30 +21,51 @@ final class SpyAIBackendService: AIBackendService {
     }
 }
 
-// MARK: - Test
+// MARK: - Tests
 
-@available(macOS 14.0, *)
 @MainActor
 final class IntegrationSmokeTest: XCTestCase {
 
-    func test_captureFlow_backendReceivesNonEmptyData() async throws {
+    func test_backendSpy_receivesNonEmptyData() async throws {
         let spy = SpyAIBackendService()
-        let coordinator = AppCoordinator(backendService: spy)
 
         let fakePNG = makeSinglePixelPNG()
-        XCTAssertFalse(fakePNG.isEmpty, "Fake PNG must be non-empty for this test to be valid")
+        XCTAssertFalse(fakePNG.isEmpty, "Fake PNG must be non-empty")
 
         try await spy.send(image: fakePNG)
 
         XCTAssertEqual(spy.receivedImages.count, 1)
         XCTAssertFalse(spy.receivedImages[0].isEmpty)
+    }
 
-        _ = coordinator
+    func test_promptAssembler_integrationWithOCRText() {
+        let assembler = PromptAssembler()
+        let ocrText = "What is Swift concurrency?"
+        let prompt = assembler.assemble(ocrText: ocrText)
+
+        XCTAssertTrue(prompt.contains(ocrText))
+        XCTAssertFalse(prompt.contains("{ocr_text}"))
+    }
+
+    func test_resultsViewModel_fullLifecycle() {
+        let viewModel = ResultsViewModel()
+
+        // Start loading
+        XCTAssertTrue(viewModel.isLoading)
+
+        // Set OCR text
+        viewModel.ocrText = "Some text"
+        XCTAssertEqual(viewModel.ocrText, "Some text")
+
+        // Set success
+        viewModel.state = .success(response: "Research results")
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertEqual(viewModel.responseText, "Research results")
     }
 
     // MARK: - Helpers
 
-    /// Returns a minimal 1×1 PNG encoded in memory — no disk I/O, no permissions needed.
+    /// Returns a minimal 1x1 PNG encoded in memory.
     private func makeSinglePixelPNG() -> Data {
         let size = CGSize(width: 1, height: 1)
         var pngData = Data()

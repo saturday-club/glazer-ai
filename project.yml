@@ -3,7 +3,7 @@ name: GlazerAI
 options:
   bundleIdPrefix: com.glazerai
   deploymentTarget:
-    macOS: "13.0"
+    macOS: "15.0"
   defaultConfig: Debug
   xcodeVersion: "16"
   groupSortPosition: none
@@ -11,14 +11,14 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
     ENABLE_HARDENED_RUNTIME: YES
 
 targets:
   GlazerAI:
     type: application
     platform: macOS
-    deploymentTarget: "13.0"
+    deploymentTarget: "15.0"
     sources:
       - path: GlazerAI
         excludes:
@@ -48,7 +48,7 @@ targets:
   GlazerAITests:
     type: bundle.unit-test
     platform: macOS
-    deploymentTarget: "13.0"
+    deploymentTarget: "15.0"
     sources:
       - GlazerAITests
     dependencies:

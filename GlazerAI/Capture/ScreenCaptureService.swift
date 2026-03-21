@@ -43,7 +43,6 @@ enum ScreenCaptureError: LocalizedError {
 ///
 /// Uses `SCScreenshotManager` (ScreenCaptureKit) for proper permission integration
 /// and to exclude the Glazer AI overlay window from the captured content.
-@available(macOS 14.0, *)
 final class ScreenCaptureService: Sendable {
 
     // MARK: - Public API

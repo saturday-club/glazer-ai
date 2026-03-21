@@ -1,6 +1,6 @@
 # Glazer AI — Software Requirements Specification
 
-**Version:** 2.0.0
+**Version:** 3.0.0
 **Date:** 2026-03-21
 **Status:** Living Document — update on every new requirement
 
@@ -11,24 +11,40 @@
 | Field | Value |
 |---|---|
 | App name | Glazer AI |
-| Purpose | macOS menu bar utility that captures a user-defined screen region and forwards the image to an AI backend pipeline |
-| Target platform | macOS 14.0+ (ScreenCaptureKit required) |
+| Purpose | macOS menu bar utility that captures a user-defined screen region, extracts text via OCR, and pipes the result through the `claude -p` CLI to produce AI-powered research output |
+| Target platform | macOS 15.0+ (Sequoia) |
 | Language | Swift 6 strict concurrency |
-| UI framework | AppKit (menu bar, overlay window) |
+| UI framework | AppKit (menu bar, overlay, results window) + SwiftUI (results view) |
 | Architecture | Coordinator pattern — `AppCoordinator` owns all major subsystems and wires them together via protocol-based dependency injection |
 | Distribution | Local build / direct install (no App Store in v1) |
 
 ---
 
-## 2. Features
+## 2. Pipeline
 
-### 2.1 Menu Bar Presence
+```
+Snip → OCR → Prompt Assembly → claude -p CLI → Results Window
+```
+
+1. User triggers capture via menu bar item (or future keyboard shortcut)
+2. Full-screen snipping overlay captures a rectangular region
+3. `ScreenCaptureService` produces a PNG `Data` blob
+4. `OCRService` extracts text from the image using Vision framework
+5. `PromptAssembler` wraps OCR text in a research prompt template
+6. `ClaudeRunner` invokes `claude -p "<prompt>"` and captures stdout
+7. `ResultsWindowController` displays the snip thumbnail, OCR text, and Claude response
+
+---
+
+## 3. Features
+
+### 3.1 Menu Bar Presence
 - The app runs exclusively as a menu bar agent (`LSUIElement = YES`); no Dock icon, no app switcher entry.
 - A single `NSStatusItem` is created at launch and persists for the lifetime of the process.
 - The status item displays a bundled donut icon (mingcute:donut-line) rendered as a template image (adapts to light/dark menu bar).
 - Clicking the status item opens the action menu.
 
-### 2.2 Action Menu
+### 3.2 Action Menu
 
 | Item | Action |
 |---|---|
@@ -36,13 +52,18 @@
 | *(separator)* | — |
 | **Quit Glazer AI** | Terminates the process |
 
-### 2.3 Permission Handling
+### 3.3 Permission Handling
 - **Screen Recording:** On launch, the app briefly sets activation policy to `.regular` and calls `SCShareableContent.current` (ScreenCaptureKit) to register with TCC and trigger the native macOS permission dialog. This is necessary because LSUIElement (background) apps have TCC dialogs suppressed. The policy reverts to `.accessory` after the prompt completes.
 - **Preflight check:** Before every capture, `CGPreflightScreenCaptureAccess()` is called. If permission has been revoked, a clear error message is shown instead of silently returning blank content.
-- Keyboard shortcuts and Accessibility permission are not currently used (feature disabled).
 
-### 2.4 Snipping Overlay
-- Full-screen `NSWindow` covering all connected displays (one window per screen in a future release; v1 covers the main screen).
+### 3.4 Claude CLI Check
+- On launch, the app runs `which claude` via `Process` to verify the CLI is installed.
+- If not found: shows `NSAlert` with title **Glazer AI**, message explaining the CLI is required, and an **Install Claude CLI** button that opens `https://claude.ai/download`.
+- If found: the resolved path is stored in `CLIEnvironment.shared.claudePath` for use by `ClaudeRunner`.
+- The `claude` CLI is assumed to be installed and authenticated on the user's machine. Glazer AI does NOT manage authentication or API keys.
+
+### 3.5 Snipping Overlay
+- Full-screen `NSWindow` covering the main screen (multi-monitor in a future release).
 - Window level: `NSWindow.Level.screenSaver` so it appears above all normal windows.
 - On presentation: screen dims (black fill, 40% opacity) over the entire display.
 - Cursor: crosshair (`NSCursor.crosshair`).
@@ -51,82 +72,127 @@
   - A 1 pt blue (`#007AFF`) border outlines the selection.
   - A label showing `W × H` (integer pixel dimensions) appears near the bottom-right handle of the rect.
 - **Cancel:** `Escape` key dismisses the overlay with no capture.
-- **Confirm:** releasing the mouse button (mouse-up) confirms the selection and triggers capture.
+- **Confirm:** releasing the mouse button (mouse-up) confirms the selection and triggers the pipeline.
 
-### 2.5 Screen Capture
-- On confirmation, `SCScreenshotManager.captureImage` (ScreenCaptureKit, macOS 14+) captures the selected region.
+### 3.6 Screen Capture
+- On confirmation, `SCScreenshotManager.captureImage` (ScreenCaptureKit) captures the selected region.
 - The capture excludes the Glazer AI overlay window via `SCContentFilter(display:excludingApplications:)`.
 - Coordinate conversion from AppKit screen coordinates (origin bottom-left) to display-local ScreenCaptureKit coordinates (origin top-left) follows the same approach as [ScrollSnap](https://github.com/Brkgng/ScrollSnap).
 - Handles Retina (HiDPI) scaling via `filter.pointPixelScale`.
 - Output: PNG `Data` blob.
+- In DEBUG builds: copies the captured PNG to the system clipboard for visual verification.
 
-### 2.6 AI Backend Integration
-- Captured `Data` is handed to an `AIBackendService` implementor.
-- v1 ships `MockAIBackendService`: logs image byte-count to console, copies image to clipboard (DEBUG only), shows a success `NSAlert`.
-- The protocol is the extension point; a real backend (HTTP upload, local model, etc.) replaces the mock without touching call sites.
+### 3.7 OCR (Optical Character Recognition)
+- Uses Vision framework `VNRecognizeTextRequest`.
+- Recognition level: `.accurate`.
+- `automaticallyDetectsLanguage = true`.
+- Runs on a background actor (`async`/`await`, Swift 6 concurrency).
+- Returns recognised text observations joined by newline.
+- Throws `OCRError.noTextFound` if no text is detected (shown via `NSAlert`).
+
+### 3.8 Research Prompt Assembly
+- `PromptAssembler` struct with a `static let defaultTemplate` constant.
+- Default template:
+  ```
+  The following text was extracted from a screenshot. Please research this topic thoroughly
+  and provide a concise, well-structured summary with key facts and relevant context:
+
+  {ocr_text}
+  ```
+- `func assemble(ocrText: String) -> String` replaces the `{ocr_text}` placeholder.
+
+### 3.9 Claude CLI Invocation
+- `ClaudeRunner` actor wraps `Process` / `Foundation.Pipe`.
+- Runs: `claude -p "<assembled prompt>"` using the path from `CLIEnvironment`.
+- Captures `stdout` (response text) and `stderr` (error detail).
+- 60-second timeout; kills process and throws `ClaudeError.timeout` if exceeded.
+- Non-zero exit code throws `ClaudeError.executionFailed(stderr: String)`.
+- Entire pipeline is `async throws`.
+
+### 3.10 Results Window
+- `ResultsWindowController` (`NSWindowController`) hosting a SwiftUI `ResultsView`.
+- Window title: **Glazer AI — Results**.
+- Layout:
+  - Top: thumbnail of snipped image (max 200pt tall, aspect-fit, rounded corners).
+  - Middle (collapsible `DisclosureGroup`): **Extracted Text** — raw OCR output, monospaced, selectable.
+  - Bottom (scrollable): **Claude's Response** — full stdout, selectable, monospaced font.
+  - Toolbar buttons: **Copy Response** (copies stdout to clipboard), **Close**.
+- Each snip opens a new results window (windows stack; user closes manually).
+- Shows a `ProgressView` with label "Thinking…" while the pipeline is running.
+
+### 3.11 Debug / Clipboard
+- The captured PNG is copied to the macOS clipboard on every snip in DEBUG builds for visual verification.
 
 ---
 
-## 3. UI/UX Details
+## 4. UI/UX Details
 
-### 3.1 Menu Bar Icon
+### 4.1 Menu Bar Icon
 - Bundled icon: `mingcute:donut-line` (Iconify) rendered as 18×18pt / 36×36px PNG with `template-rendering-intent: template`.
 - Fallback: SF Symbol `circle.dashed` if bundled asset is missing.
 - Size: 18 × 18 pt, explicitly set on `NSImage.size` to prevent overflow.
 
-### 3.2 Snipping Surface Behaviour
+### 4.2 Snipping Surface Behaviour
 1. Menu item fires → overlay window appears instantly (no animation).
 2. User moves mouse → crosshair cursor shown.
 3. Mouse-down → anchor point recorded.
 4. Mouse-drag → live rect drawn; dim layer has a clear hole matching the rect; blue border and dimension label update in real time.
-5. Mouse-up → rect finalised → overlay dismissed → capture begins.
+5. Mouse-up → rect finalised → overlay dismissed → pipeline begins.
 6. Escape at any point → overlay dismissed → no capture.
+
+### 4.3 Results Window Layout
+```
+┌─────────────────────────────────────┐
+│  Glazer AI — Results           [×]  │
+├─────────────────────────────────────┤
+│  ┌─────────────────────────────┐    │
+│  │     Snip Thumbnail          │    │
+│  │     (max 200pt tall)        │    │
+│  └─────────────────────────────┘    │
+│                                     │
+│  ▶ Extracted Text                   │
+│  ┌─────────────────────────────┐    │
+│  │ (collapsed OCR text)        │    │
+│  └─────────────────────────────┘    │
+│                                     │
+│  Claude's Response                  │
+│  ┌─────────────────────────────┐    │
+│  │ (scrollable, monospaced)    │    │
+│  │ ...                         │    │
+│  └─────────────────────────────┘    │
+│                                     │
+│  [Copy Response]        [Close]     │
+└─────────────────────────────────────┘
+```
 
 ---
 
-## 4. Keyboard Shortcuts
+## 5. Keyboard Shortcuts
 
 | Shortcut | Action | Configurable |
 |---|---|---|
 | Escape | Cancel snipping overlay | No |
 
-Global keyboard shortcut feature (⌘⇧2 via CGEvent tap) is currently disabled. The `GlobalHotkeyManager` code remains in the repo but is not wired into `AppCoordinator`.
+Global keyboard shortcut feature (⌘⇧2) is currently disabled. The `GlobalHotkeyManager` code remains in the repo but is not wired into `AppCoordinator`. Re-enabling is planned for a future release.
 
 ---
 
-## 5. AI Backend Integration
+## 6. Error Handling
 
-### 5.1 Protocol Contract
+All errors are surfaced via `NSAlert` with title **Glazer AI** and actionable recovery text:
 
-```swift
-protocol AIBackendService: AnyObject, Sendable {
-    /// Sends a PNG image to the AI backend.
-    func send(image: Data) async throws
-}
-```
-
-### 5.2 Error Type
-
-```swift
-enum AIBackendError: LocalizedError {
-    case emptyPayload
-    case networkFailure(underlying: Error)
-    case unexpectedResponse(statusCode: Int)
-}
-```
-
-### 5.3 Mock Implementation
-`MockAIBackendService` (v1):
-- Validates `image` is non-empty; throws `AIBackendError.emptyPayload` otherwise.
-- Prints `"[Glazer AI] Captured \(image.count) bytes"` to stdout.
-- In DEBUG builds: copies captured image to system clipboard for visual verification.
-- Shows `NSAlert` with title "Capture Sent" and message "Image size: \(image.count) bytes".
-
-> **TODO:** Replace `MockAIBackendService` with a real backend implementation. See §9.
+| Error | Message |
+|---|---|
+| Screen Recording not granted | "Go to System Settings → Privacy & Security → Screen Recording and enable Glazer AI" |
+| claude CLI not found | "The Claude CLI is required. Click Install to download it." |
+| claude non-zero exit | stderr content displayed |
+| claude timeout (60s) | "The Claude CLI did not respond within 60 seconds." |
+| OCR no text found | "No text was detected in the captured region." |
+| Empty capture | "The selected region is too small to capture." |
 
 ---
 
-## 6. Data Flow
+## 7. Data Flow
 
 ```
 User (menu item)
@@ -142,36 +208,57 @@ User (menu item)
         │
         ▼
  ScreenCaptureService.capture(rect:) → Data (PNG)
-        │   (SCScreenshotManager.captureImage via ScreenCaptureKit)
+        │   (SCScreenshotManager.captureImage)
+        │   (DEBUG: copy to clipboard)
         ▼
- AIBackendService.send(image:)
+ OCRService.recognizeText(in:) → String
+        │   (VNRecognizeTextRequest)
+        ▼
+ PromptAssembler.assemble(ocrText:) → String
         │
         ▼
- MockAIBackendService → clipboard + NSAlert + console log
+ ClaudeRunner.run(prompt:) → String
+        │   (claude -p "<prompt>")
+        ▼
+ ResultsWindowController
+ ├─ snip thumbnail
+ ├─ OCR text (collapsible)
+ └─ Claude response (scrollable, copyable)
 ```
 
 ---
 
-## 7. File & Folder Structure
+## 8. File & Folder Structure
 
 ```
 GlazerAI/
 ├── GlazerAI.xcodeproj/
 │   └── project.pbxproj
-├── GlazerAI/                        # App target sources
+├── GlazerAI/                            # App target sources
 │   ├── App/
-│   │   ├── GlazerAIApp.swift          # @main entry point, creates AppCoordinator
-│   │   └── AppCoordinator.swift     # Owns status item, window controllers
+│   │   ├── GlazerAIApp.swift            # @main entry point, creates AppCoordinator
+│   │   └── AppCoordinator.swift         # Owns and wires all subsystems
 │   ├── MenuBar/
-│   │   └── MenuBarController.swift  # NSStatusItem setup and menu construction
+│   │   └── MenuBarController.swift      # NSStatusItem setup and menu construction
 │   ├── Snipping/
 │   │   ├── SnippingWindowController.swift  # Full-screen overlay NSWindow
 │   │   └── SnippingView.swift              # NSView subclass drawing dim+rect+label
 │   ├── Capture/
 │   │   └── ScreenCaptureService.swift      # SCScreenshotManager wrapper
+│   ├── OCR/
+│   │   └── OCRService.swift                # Vision framework text recognition
+│   ├── Prompt/
+│   │   └── PromptAssembler.swift           # Research prompt template + assembly
+│   ├── CLI/
+│   │   ├── CLIEnvironment.swift            # claude CLI path resolution
+│   │   └── ClaudeRunner.swift              # Process wrapper for claude -p
+│   ├── Results/
+│   │   ├── ResultsWindowController.swift   # NSWindowController for results
+│   │   ├── ResultsView.swift               # SwiftUI view
+│   │   └── ResultsViewModel.swift          # Observable state for results
 │   ├── Backend/
-│   │   ├── AIBackendService.swift          # Protocol + error enum
-│   │   └── MockAIBackendService.swift      # Mock implementation
+│   │   ├── AIBackendService.swift          # Protocol + error enum (kept for testing)
+│   │   └── MockAIBackendService.swift      # Mock implementation (kept for testing)
 │   ├── Settings/                           # (disabled — files kept for future use)
 │   │   ├── SettingsWindowController.swift
 │   │   ├── SettingsView.swift
@@ -187,9 +274,11 @@ GlazerAI/
 ├── GlazerAITests/                     # Unit test target
 │   ├── RectCalculationTests.swift
 │   ├── CoordinateConversionTests.swift
-│   ├── GlobalHotkeyManagerTests.swift
+│   ├── OCRServiceTests.swift
+│   ├── PromptAssemblerTests.swift
+│   ├── ClaudeRunnerTests.swift
+│   ├── ResultsViewModelTests.swift
 │   ├── MockAIBackendServiceTests.swift
-│   ├── UserDefaultsShortcutTests.swift
 │   └── IntegrationSmokeTest.swift
 ├── scripts/
 │   ├── launch.sh                    # Build + launch (--reset to wipe TCC)
@@ -201,19 +290,20 @@ GlazerAI/
 ├── project.yml                      # xcodegen project definition
 ├── .swiftlint.yml
 ├── .gitignore
-├── SPEC.md                          # This document
-└── BE-SPEC.md                       # (planned) Python LLM backend spec
+└── SPEC.md                          # This document
 ```
 
 ---
 
-## 8. Build & Run Instructions
+## 9. Build & Run Instructions
 
 ### Prerequisites
-- macOS 14.0+ (ScreenCaptureKit `SCScreenshotManager` required)
-- Xcode 15.0+ (Xcode 26 confirmed working)
+- macOS 15.0+ (Sequoia)
+- Xcode 16.0+ (Xcode 26 confirmed working)
+- Swift 6
 - SwiftLint (`brew install swiftlint`)
 - xcodegen (`brew install xcodegen`) — only needed when modifying `project.yml`
+- `claude` CLI installed and authenticated (`https://claude.ai/download`)
 
 ### Quick Launch
 ```bash
@@ -231,18 +321,6 @@ make lint      # SwiftLint only
 
 ### xcodegen Note
 Running `xcodegen generate` overwrites `Info.plist`, removing custom keys (`LSUIElement`, `NSScreenCaptureUsageDescription`, `CFBundleDisplayName`). Always restore them after regeneration.
-
----
-
-## 9. Open Questions / Future Work
-
-- **TODO:** Replace `MockAIBackendService` with a Python LLM-based research pipeline (see `BE-SPEC.md`).
-- **TODO:** Re-enable global keyboard shortcut (⌘⇧2) with proper Accessibility permission handling.
-- Multi-monitor support: extend snipping overlay to span all screens.
-- Annotation tools: arrows, text, blur before sending.
-- Capture history: local log of previous snips.
-- Sandboxing / App Store distribution: requires entitlement changes.
-- Accessibility: VoiceOver support.
 
 ---
 
@@ -279,10 +357,12 @@ Each step exits non-zero on failure; the pipeline stops immediately.
 |---|---|
 | `RectCalculationTests` | Rectangle normalisation (negative width/height), small-rect rejection |
 | `CoordinateConversionTests` | AppKit → CG coordinate conversion formula |
-| `GlobalHotkeyManagerTests` | Registration / deregistration lifecycle |
+| `OCRServiceTests` | Text extraction, empty-result error handling |
+| `PromptAssemblerTests` | Placeholder substitution, empty OCR text handling |
+| `ClaudeRunnerTests` | stdout capture, timeout, non-zero exit error |
+| `ResultsViewModelTests` | State transitions (loading → success → error) |
 | `MockAIBackendServiceTests` | Empty-payload error, success path byte count |
-| `UserDefaultsShortcutTests` | UserDefaults encode/decode round-trip for shortcut struct |
-| `IntegrationSmokeTest` | Full coordinator → mock backend pipeline |
+| `IntegrationSmokeTest` | Full pipeline smoke test with mocked dependencies |
 
 Target coverage: ≥ 80% of non-UI source lines.
 
@@ -303,3 +383,16 @@ Target coverage: ≥ 80% of non-UI source lines.
 | `cyclomatic_complexity` | warning at 10, error at 20 |
 
 SwiftLint runs as a build phase Run Script in Xcode and via `scripts/lint.sh`.
+
+---
+
+## 14. Open Questions / Future Work
+
+- **TODO:** Re-enable global keyboard shortcut (⌘⇧2) with proper Accessibility permission handling.
+- **TODO:** Add Settings panel with shortcut recorder, editable research prompt, CLI path display.
+- **TODO:** Streaming Claude output to results window (progressive rendering).
+- Multi-monitor support: extend snipping overlay to span all screens.
+- Annotation tools: arrows, text, blur before sending.
+- Capture history: local log of previous snips.
+- Sandboxing / App Store distribution: requires entitlement changes.
+- Accessibility: VoiceOver support.

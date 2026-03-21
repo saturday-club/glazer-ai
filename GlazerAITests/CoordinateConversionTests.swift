@@ -4,7 +4,6 @@
 import XCTest
 @testable import GlazerAI
 
-@available(macOS 14.0, *)
 final class CoordinateConversionTests: XCTestCase {
 
     // Tests the coordinate conversion formula directly — no service methods called.
