@@ -19,7 +19,6 @@ final class AppCoordinator {
     private let snippingWindowController: SnippingWindowController
     private let captureService: ScreenCaptureService
     private let backendService: AIBackendService
-    private let settingsWindowController: SettingsWindowController
 
     // MARK: - Init
 
@@ -28,8 +27,6 @@ final class AppCoordinator {
         self.menuBarController        = MenuBarController()
         self.snippingWindowController = SnippingWindowController()
         self.captureService           = ScreenCaptureService()
-        self.settingsWindowController = SettingsWindowController(onSave: { _ in })
-
         wire()
         requestPermissionsOnLaunch()
     }
@@ -81,10 +78,6 @@ extension AppCoordinator: MenuBarControllerDelegate {
 
     func menuBarControllerDidRequestCapture(_ controller: MenuBarController) {
         startCapture()
-    }
-
-    func menuBarControllerDidRequestSettings(_ controller: MenuBarController) {
-        settingsWindowController.present()
     }
 }
 

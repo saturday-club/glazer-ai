@@ -11,10 +11,8 @@ import Foundation
 /// Handles actions triggered from the menu bar menu.
 @MainActor
 protocol MenuBarControllerDelegate: AnyObject {
-    /// The user chose "Capture Region" from the menu (or triggered via shortcut).
+    /// The user chose "Capture Region" from the menu.
     func menuBarControllerDidRequestCapture(_ controller: MenuBarController)
-    /// The user chose "Settings…" from the menu.
-    func menuBarControllerDidRequestSettings(_ controller: MenuBarController)
 }
 
 // MARK: - Controller
@@ -44,7 +42,6 @@ final class MenuBarController {
     private func configureButton() {
         guard let button = statusItem.button else { return }
 
-        // Prefer the bundled donut PNG; fall back to SF Symbol if asset is missing.
         let iconSize = NSSize(width: Constants.menuBarIconSize, height: Constants.menuBarIconSize)
         if let bundledIcon = NSImage(named: "MenuBarIcon") {
             bundledIcon.size = iconSize
@@ -57,7 +54,7 @@ final class MenuBarController {
             button.image = sfIcon
         }
 
-        button.toolTip = "Glazer AI — ⌘⇧2 to capture"
+        button.toolTip = "Glazer AI"
     }
 
     private func configureMenu() {
@@ -72,15 +69,6 @@ final class MenuBarController {
         menu.addItem(captureItem)
 
         menu.addItem(.separator())
-
-        let settingsItem = NSMenuItem(
-            title: "Settings…",
-            action: #selector(openSettings),
-            keyEquivalent: ","
-        )
-        settingsItem.keyEquivalentModifierMask = .command
-        settingsItem.target = self
-        menu.addItem(settingsItem)
 
         let quitItem = NSMenuItem(
             title: "Quit Glazer AI",
@@ -98,10 +86,6 @@ final class MenuBarController {
 
     @objc private func captureRegion() {
         delegate?.menuBarControllerDidRequestCapture(self)
-    }
-
-    @objc private func openSettings() {
-        delegate?.menuBarControllerDidRequestSettings(self)
     }
 
     @objc private func quitApp() {
