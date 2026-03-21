@@ -28,6 +28,15 @@ final class MockAIBackendService: AIBackendService {
 
         print("[Glazer AI] Captured \(image.count) bytes")
 
+        #if DEBUG
+        // Copy the captured image to the clipboard so it can be inspected by pasting.
+        if let nsImage = NSImage(data: image) {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.writeObjects([nsImage])
+            print("[DEBUG] Captured image copied to clipboard — paste anywhere to verify.")
+        }
+        #endif
+
         await MainActor.run {
             let alert = NSAlert()
             alert.messageText = "Capture Sent"
