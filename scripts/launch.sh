@@ -23,10 +23,11 @@ if [[ -z "$APP" ]]; then
   exit 1
 fi
 
-# Reset TCC permission entries so each launch tests the fresh-grant flow.
-echo "Resetting permissions for $BUNDLE_ID..."
-tccutil reset Accessibility "$BUNDLE_ID"
-tccutil reset ScreenCapture "$BUNDLE_ID"
+if [[ "${1:-}" == "--reset" ]]; then
+  echo "Resetting permissions for $BUNDLE_ID..."
+  tccutil reset Accessibility "$BUNDLE_ID"
+  tccutil reset ScreenCapture "$BUNDLE_ID"
+fi
 
 echo "Launching $APP"
 open "$APP"
