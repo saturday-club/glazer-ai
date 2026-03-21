@@ -21,6 +21,8 @@ final class AppCoordinator {
     private let captureService: ScreenCaptureService
     private let backendService: AIBackendService
     private let settingsWindowController: SettingsWindowController
+    private let permissionService: ScreenRecordingPermissionService
+    private var permissionWindowController: PermissionWindowController?
 
     // MARK: - Init
 
@@ -36,8 +38,10 @@ final class AppCoordinator {
         self.snippingWindowController    = SnippingWindowController()
         self.captureService              = ScreenCaptureService()
         self.settingsWindowController    = SettingsWindowController(onSave: { _ in })
+        self.permissionService           = ScreenRecordingPermissionService()
 
         wire()
+        checkPermissionOnLaunch()
     }
 
     // MARK: - Public API
@@ -73,6 +77,13 @@ final class AppCoordinator {
     private func saveShortcut(_ shortcut: KeyboardShortcut) {
         guard let data = try? JSONEncoder().encode(shortcut) else { return }
         UserDefaults.standard.set(data, forKey: Constants.shortcutDefaultsKey)
+    }
+
+    private func checkPermissionOnLaunch() {
+        guard !permissionService.isGranted else { return }
+        let controller = PermissionWindowController(permissionService: permissionService)
+        permissionWindowController = controller
+        controller.present()
     }
 
     private func handleCaptureError(_ error: Error) {

@@ -95,7 +95,7 @@ final class SnippingView: NSView {
         currentRect = CGRect(
             x: anchorPoint.x,
             y: anchorPoint.y,
-            width:  current.x - anchorPoint.x,
+            width: current.x - anchorPoint.x,
             height: current.y - anchorPoint.y
         )
         needsDisplay = true

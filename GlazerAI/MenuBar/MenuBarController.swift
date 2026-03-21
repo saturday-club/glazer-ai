@@ -44,12 +44,14 @@ final class MenuBarController {
     private func configureButton() {
         guard let button = statusItem.button else { return }
 
-        if let sfIcon = NSImage(systemSymbolName: Constants.menuBarSymbolName, accessibilityDescription: "Glazer AI") {
-            sfIcon.isTemplate = true
-            button.image = sfIcon
-        } else if let bundledIcon = NSImage(named: "MenuBarIcon") {
+        // Prefer the bundled donut PNG; fall back to SF Symbol if asset is missing.
+        if let bundledIcon = NSImage(named: "MenuBarIcon") {
             bundledIcon.isTemplate = true
             button.image = bundledIcon
+        } else if let sfIcon = NSImage(systemSymbolName: Constants.menuBarSymbolName,
+                                       accessibilityDescription: "Glazer AI") {
+            sfIcon.isTemplate = true
+            button.image = sfIcon
         }
 
         button.toolTip = "Glazer AI — ⌘⇧2 to capture"
