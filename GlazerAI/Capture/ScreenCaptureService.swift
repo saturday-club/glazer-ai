@@ -11,6 +11,8 @@ import Foundation
 
 /// Errors produced by ``ScreenCaptureService``.
 enum ScreenCaptureError: LocalizedError {
+    /// Screen Recording permission has not been granted.
+    case permissionDenied
     /// The provided rectangle had zero or negative area after normalisation.
     case invalidRect
     /// Core Graphics failed to produce an image.
@@ -20,9 +22,14 @@ enum ScreenCaptureError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidRect:           return "The selected region is too small to capture."
-        case .captureFailure:        return "Screen capture failed. Is Screen Recording permission granted?"
-        case .pngConversionFailure:  return "Failed to encode the captured image as PNG."
+        case .permissionDenied:
+            return "Screen Recording permission is required. Go to System Settings → Privacy & Security → Screen Recording and enable Glazer AI, then try again."
+        case .invalidRect:
+            return "The selected region is too small to capture."
+        case .captureFailure:
+            return "Screen capture failed."
+        case .pngConversionFailure:
+            return "Failed to encode the captured image as PNG."
         }
     }
 }
@@ -41,6 +48,10 @@ final class ScreenCaptureService {
     /// - Returns: PNG-encoded `Data` of the captured region.
     /// - Throws: ``ScreenCaptureError`` on failure.
     func capture(rect: CGRect) throws -> Data {
+        guard CGPreflightScreenCaptureAccess() else {
+            throw ScreenCaptureError.permissionDenied
+        }
+
         let normalised = normalise(rect: rect)
 
         guard normalised.width  >= Constants.minimumSelectionSize,
