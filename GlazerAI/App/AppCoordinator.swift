@@ -6,6 +6,7 @@
 
 import AppKit
 import ApplicationServices
+import CoreGraphics
 import Foundation
 
 /// Owns and coordinates all major Glazer AI subsystems.
@@ -39,6 +40,7 @@ final class AppCoordinator {
         self.settingsWindowController = SettingsWindowController(onSave: { _ in })
 
         wire()
+        requestPermissionsOnLaunch()
     }
 
     // MARK: - Public API
@@ -68,6 +70,11 @@ final class AppCoordinator {
             let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
             AXIsProcessTrustedWithOptions(options)
         }
+    }
+
+    private func requestPermissionsOnLaunch() {
+        // Triggers the native Screen Recording permission prompt if not yet granted.
+        CGRequestScreenCaptureAccess()
     }
 
     private func loadShortcut() -> KeyboardShortcut {
