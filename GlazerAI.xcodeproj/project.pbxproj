@@ -1,0 +1,576 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		09F4851804C44082411356FF /* CoordinateConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124735F325ECEE09430BA957 /* CoordinateConversionTests.swift */; };
+		0E3038B18BB94ABBE1B6A85D /* GlobalHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */; };
+		18E1EE28CC2DE49B81CF3581 /* ScreenCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E6A3F978BC1E781A72AAFF /* ScreenCaptureService.swift */; };
+		255DE60A17E937B70606B3EC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E34A7908630963A4EB3012 /* Constants.swift */; };
+		59C280BBCA7869A9C9CAB45D /* GlobalHotkeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */; };
+		6229C9E73BE224AF8CC4F103 /* GlazerAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1991914E41ED836086E01FA7 /* GlazerAIApp.swift */; };
+		6BFCA9BB55E17AC90453B4FF /* IntegrationSmokeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC4C48418C477B9FE2381B2A /* IntegrationSmokeTest.swift */; };
+		6CB6249458209B736CAD106F /* SnippingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */; };
+		7CDEFE6167657225E53A8C00 /* MockAIBackendServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */; };
+		85A00513AFD3E4328682CDBA /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */; };
+		8AA901654677E394E2E7BC1D /* MockAIBackendService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D51A2BEF291BF14A33DC680E /* MockAIBackendService.swift */; };
+		8CD0ABF47BC53CE62B8270CC /* SnippingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA7E5CA7EB21EA390CE1C7DE /* SnippingView.swift */; };
+		A64DC22D03A4BB4371DBDC39 /* RectCalculationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF11CB4CCE5A7C60322C060 /* RectCalculationTests.swift */; };
+		ABFD33FBF38C468C0FE54210 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */; };
+		B23F59D605EA5CD029434845 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E659A65780F8E11474DDB7 /* MenuBarController.swift */; };
+		B4F9A14B26485F85C21ADDE9 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96E20713B22E332B0A41DBFF /* AppCoordinator.swift */; };
+		C7489F370AA56A6C744EB480 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E6ED6F4A1D5778766FFC9518 /* Assets.xcassets */; };
+		D9AB9EC3C96FA54295DE0724 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128395F0AC6B8191EB0B269A /* SettingsView.swift */; };
+		E5D367DB1B269D04F5367BD0 /* UserDefaultsShortcutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FA588D74C65B38E4C8A5D /* UserDefaultsShortcutTests.swift */; };
+		E82E4876466FD89D87D4838B /* AIBackendService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC4ACED9AFF6B589E150D99 /* AIBackendService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A77ADD73455FCD6A106400B5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 81C897D3642F6C8043A29D9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9D7FAD00D74A48DD0CBCD46C;
+			remoteInfo = GlazerAI;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		124735F325ECEE09430BA957 /* CoordinateConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinateConversionTests.swift; sourceTree = "<group>"; };
+		128395F0AC6B8191EB0B269A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1991914E41ED836086E01FA7 /* GlazerAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlazerAIApp.swift; sourceTree = "<group>"; };
+		1EF11CB4CCE5A7C60322C060 /* RectCalculationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectCalculationTests.swift; sourceTree = "<group>"; };
+		2A4FA588D74C65B38E4C8A5D /* UserDefaultsShortcutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsShortcutTests.swift; sourceTree = "<group>"; };
+		2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManagerTests.swift; sourceTree = "<group>"; };
+		30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippingWindowController.swift; sourceTree = "<group>"; };
+		3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIBackendServiceTests.swift; sourceTree = "<group>"; };
+		39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
+		434B05EEFDC1CE1F6CB7BB3B /* GlazerAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlazerAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManager.swift; sourceTree = "<group>"; };
+		96E20713B22E332B0A41DBFF /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		B3E6A3F978BC1E781A72AAFF /* ScreenCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCaptureService.swift; sourceTree = "<group>"; };
+		C6E34A7908630963A4EB3012 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		C965E51836149F1F86CFEEA9 /* GlazerAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GlazerAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CA7E5CA7EB21EA390CE1C7DE /* SnippingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippingView.swift; sourceTree = "<group>"; };
+		D51A2BEF291BF14A33DC680E /* MockAIBackendService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIBackendService.swift; sourceTree = "<group>"; };
+		E6ED6F4A1D5778766FFC9518 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		ECC4ACED9AFF6B589E150D99 /* AIBackendService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIBackendService.swift; sourceTree = "<group>"; };
+		F0E659A65780F8E11474DDB7 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		FC4C48418C477B9FE2381B2A /* IntegrationSmokeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationSmokeTest.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0854D8F5DFDCD75EFEB7C1ED /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				C6E34A7908630963A4EB3012 /* Constants.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		2E9110A6E05CDE4501075640 = {
+			isa = PBXGroup;
+			children = (
+				D4546C74454999360F51A3CF /* GlazerAI */,
+				CE7C7ABF791D9F35AF449172 /* GlazerAITests */,
+				520659F33A9FF8C49C3B2C9A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		374B8F8AFB22E4D763F54A8B /* Snipping */ = {
+			isa = PBXGroup;
+			children = (
+				CA7E5CA7EB21EA390CE1C7DE /* SnippingView.swift */,
+				30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */,
+			);
+			path = Snipping;
+			sourceTree = "<group>";
+		};
+		4CE2920C9B334A8911F9C827 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				96E20713B22E332B0A41DBFF /* AppCoordinator.swift */,
+				1991914E41ED836086E01FA7 /* GlazerAIApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		520659F33A9FF8C49C3B2C9A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				434B05EEFDC1CE1F6CB7BB3B /* GlazerAI.app */,
+				C965E51836149F1F86CFEEA9 /* GlazerAITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7E8D48FDEAF556EA2A796A35 /* Hotkey */ = {
+			isa = PBXGroup;
+			children = (
+				8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */,
+			);
+			path = Hotkey;
+			sourceTree = "<group>";
+		};
+		8CCCAF1C323BF3E9B71974F2 /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				B3E6A3F978BC1E781A72AAFF /* ScreenCaptureService.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
+		};
+		A6BBFF9E0A7C5D85F4AC5244 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E6ED6F4A1D5778766FFC9518 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CE7C7ABF791D9F35AF449172 /* GlazerAITests */ = {
+			isa = PBXGroup;
+			children = (
+				124735F325ECEE09430BA957 /* CoordinateConversionTests.swift */,
+				2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */,
+				FC4C48418C477B9FE2381B2A /* IntegrationSmokeTest.swift */,
+				3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */,
+				1EF11CB4CCE5A7C60322C060 /* RectCalculationTests.swift */,
+				2A4FA588D74C65B38E4C8A5D /* UserDefaultsShortcutTests.swift */,
+			);
+			path = GlazerAITests;
+			sourceTree = "<group>";
+		};
+		CEFE76DDEFF58D242CC36B31 /* Backend */ = {
+			isa = PBXGroup;
+			children = (
+				ECC4ACED9AFF6B589E150D99 /* AIBackendService.swift */,
+				D51A2BEF291BF14A33DC680E /* MockAIBackendService.swift */,
+			);
+			path = Backend;
+			sourceTree = "<group>";
+		};
+		D4546C74454999360F51A3CF /* GlazerAI */ = {
+			isa = PBXGroup;
+			children = (
+				4CE2920C9B334A8911F9C827 /* App */,
+				CEFE76DDEFF58D242CC36B31 /* Backend */,
+				8CCCAF1C323BF3E9B71974F2 /* Capture */,
+				7E8D48FDEAF556EA2A796A35 /* Hotkey */,
+				F244E715DCFF892D854D5AEE /* MenuBar */,
+				A6BBFF9E0A7C5D85F4AC5244 /* Resources */,
+				E2256B6DD4ACF51C0CF02426 /* Settings */,
+				374B8F8AFB22E4D763F54A8B /* Snipping */,
+				0854D8F5DFDCD75EFEB7C1ED /* Support */,
+			);
+			path = GlazerAI;
+			sourceTree = "<group>";
+		};
+		E2256B6DD4ACF51C0CF02426 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				128395F0AC6B8191EB0B269A /* SettingsView.swift */,
+				6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */,
+				39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		F244E715DCFF892D854D5AEE /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				F0E659A65780F8E11474DDB7 /* MenuBarController.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		07786F7F87305ACFD8CD5205 /* GlazerAITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 27FE619DE1410D6127BB4576 /* Build configuration list for PBXNativeTarget "GlazerAITests" */;
+			buildPhases = (
+				D8FDDD15999C1A725F60B88C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B8B817F4CAB098F87A7FD5C8 /* PBXTargetDependency */,
+			);
+			name = GlazerAITests;
+			packageProductDependencies = (
+			);
+			productName = GlazerAITests;
+			productReference = C965E51836149F1F86CFEEA9 /* GlazerAITests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9D7FAD00D74A48DD0CBCD46C /* GlazerAI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9A568572F44F0913E054EB1B /* Build configuration list for PBXNativeTarget "GlazerAI" */;
+			buildPhases = (
+				67B858F1701299AE19CB2662 /* SwiftLint */,
+				10043B2EF32928DC47C46234 /* Sources */,
+				3E0609C6D416F89FE4497F6B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GlazerAI;
+			packageProductDependencies = (
+			);
+			productName = GlazerAI;
+			productReference = 434B05EEFDC1CE1F6CB7BB3B /* GlazerAI.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		81C897D3642F6C8043A29D9F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					9D7FAD00D74A48DD0CBCD46C = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = B86BCE22CCE31B3F25DCC061 /* Build configuration list for PBXProject "GlazerAI" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 2E9110A6E05CDE4501075640;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 520659F33A9FF8C49C3B2C9A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9D7FAD00D74A48DD0CBCD46C /* GlazerAI */,
+				07786F7F87305ACFD8CD5205 /* GlazerAITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3E0609C6D416F89FE4497F6B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C7489F370AA56A6C744EB480 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		67B858F1701299AE19CB2662 /* SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = SwiftLint;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint > /dev/null; then\n  swiftlint lint --config \"${SRCROOT}/.swiftlint.yml\"\nelse\n  echo \"warning: SwiftLint not installed — run: brew install swiftlint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		10043B2EF32928DC47C46234 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E82E4876466FD89D87D4838B /* AIBackendService.swift in Sources */,
+				B4F9A14B26485F85C21ADDE9 /* AppCoordinator.swift in Sources */,
+				255DE60A17E937B70606B3EC /* Constants.swift in Sources */,
+				6229C9E73BE224AF8CC4F103 /* GlazerAIApp.swift in Sources */,
+				0E3038B18BB94ABBE1B6A85D /* GlobalHotkeyManager.swift in Sources */,
+				B23F59D605EA5CD029434845 /* MenuBarController.swift in Sources */,
+				8AA901654677E394E2E7BC1D /* MockAIBackendService.swift in Sources */,
+				18E1EE28CC2DE49B81CF3581 /* ScreenCaptureService.swift in Sources */,
+				D9AB9EC3C96FA54295DE0724 /* SettingsView.swift in Sources */,
+				ABFD33FBF38C468C0FE54210 /* SettingsWindowController.swift in Sources */,
+				85A00513AFD3E4328682CDBA /* ShortcutRecorderView.swift in Sources */,
+				8CD0ABF47BC53CE62B8270CC /* SnippingView.swift in Sources */,
+				6CB6249458209B736CAD106F /* SnippingWindowController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D8FDDD15999C1A725F60B88C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				09F4851804C44082411356FF /* CoordinateConversionTests.swift in Sources */,
+				59C280BBCA7869A9C9CAB45D /* GlobalHotkeyManagerTests.swift in Sources */,
+				6BFCA9BB55E17AC90453B4FF /* IntegrationSmokeTest.swift in Sources */,
+				7CDEFE6167657225E53A8C00 /* MockAIBackendServiceTests.swift in Sources */,
+				A64DC22D03A4BB4371DBDC39 /* RectCalculationTests.swift in Sources */,
+				E5D367DB1B269D04F5367BD0 /* UserDefaultsShortcutTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B8B817F4CAB098F87A7FD5C8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9D7FAD00D74A48DD0CBCD46C /* GlazerAI */;
+			targetProxy = A77ADD73455FCD6A106400B5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		2432777C2AD01DEBA4569612 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.glazerai.tests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GlazerAI.app/Contents/MacOS/GlazerAI";
+			};
+			name = Debug;
+		};
+		2A5A5FD3953E294448CCFDA6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		2B9C5C9BA81FF920FE55A83E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = GlazerAI/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.glazerai.app;
+				PRODUCT_NAME = GlazerAI;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		5B3666F6E450C37752F70A84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = GlazerAI/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.glazerai.app;
+				PRODUCT_NAME = GlazerAI;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		74E5D0F229763EED4DBC99E4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		DF99942A93F4959B94A63873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.glazerai.tests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GlazerAI.app/Contents/MacOS/GlazerAI";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		27FE619DE1410D6127BB4576 /* Build configuration list for PBXNativeTarget "GlazerAITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2432777C2AD01DEBA4569612 /* Debug */,
+				DF99942A93F4959B94A63873 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9A568572F44F0913E054EB1B /* Build configuration list for PBXNativeTarget "GlazerAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B3666F6E450C37752F70A84 /* Debug */,
+				2B9C5C9BA81FF920FE55A83E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B86BCE22CCE31B3F25DCC061 /* Build configuration list for PBXProject "GlazerAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A5A5FD3953E294448CCFDA6 /* Debug */,
+				74E5D0F229763EED4DBC99E4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 81C897D3642F6C8043A29D9F /* Project object */;
+}

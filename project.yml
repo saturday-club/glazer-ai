@@ -1,0 +1,60 @@
+name: GlazerAI
+
+options:
+  bundleIdPrefix: com.glazerai
+  deploymentTarget:
+    macOS: "13.0"
+  defaultConfig: Debug
+  xcodeVersion: "16"
+  groupSortPosition: none
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  GlazerAI:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: GlazerAI
+        excludes:
+          - Resources/Info.plist
+    resources:
+      - GlazerAI/Resources/Assets.xcassets
+    info:
+      path: GlazerAI/Resources/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.glazerai.app
+        PRODUCT_NAME: GlazerAI
+        INFOPLIST_FILE: GlazerAI/Resources/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "6.0"
+        ENABLE_HARDENED_RUNTIME: YES
+    preBuildScripts:
+      - name: SwiftLint
+        script: |
+          if which swiftlint > /dev/null; then
+            swiftlint lint --config "${SRCROOT}/.swiftlint.yml"
+          else
+            echo "warning: SwiftLint not installed — run: brew install swiftlint"
+          fi
+        basedOnDependencyAnalysis: false
+
+  GlazerAITests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - GlazerAITests
+    dependencies:
+      - target: GlazerAI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.glazerai.tests
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
