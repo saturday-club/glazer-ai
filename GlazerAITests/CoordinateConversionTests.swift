@@ -20,7 +20,7 @@ final class CoordinateConversionTests: XCTestCase {
         let cgRect = CGRect(
             x: appKitRect.origin.x,
             y: expectedY,
-            width:  appKitRect.width,
+            width: appKitRect.width,
             height: appKitRect.height
         )
 

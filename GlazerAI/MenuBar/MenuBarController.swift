@@ -45,11 +45,14 @@ final class MenuBarController {
         guard let button = statusItem.button else { return }
 
         // Prefer the bundled donut PNG; fall back to SF Symbol if asset is missing.
+        let iconSize = NSSize(width: Constants.menuBarIconSize, height: Constants.menuBarIconSize)
         if let bundledIcon = NSImage(named: "MenuBarIcon") {
+            bundledIcon.size = iconSize
             bundledIcon.isTemplate = true
             button.image = bundledIcon
         } else if let sfIcon = NSImage(systemSymbolName: Constants.menuBarSymbolName,
                                        accessibilityDescription: "Glazer AI") {
+            sfIcon.size = iconSize
             sfIcon.isTemplate = true
             button.image = sfIcon
         }

@@ -78,6 +78,7 @@ final class GlobalHotkeyManager {
     /// - Returns: `true` if registration succeeded; `false` if the event tap
     ///   could not be created (usually due to missing Accessibility permission).
     @discardableResult
+    // swiftlint:disable:next function_body_length
     func register(shortcut: KeyboardShortcut, handler: @Sendable @escaping () -> Void) -> Bool {
         tearDownTap()
 
@@ -95,17 +96,17 @@ final class GlobalHotkeyManager {
             }
 
             let ctx = Unmanaged<TapContext>.fromOpaque(userInfo).takeUnretainedValue()
-            let sc = ctx.shortcut
+            let shortcutDef = ctx.shortcut
 
             let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
             let flags = event.flags
 
-            let wantsCmd   = (sc.modifierFlags & UInt32(cmdKey))     != 0
-            let wantsShift = (sc.modifierFlags & UInt32(shiftKey))   != 0
-            let wantsOpt   = (sc.modifierFlags & UInt32(optionKey))  != 0
-            let wantsCtrl  = (sc.modifierFlags & UInt32(controlKey)) != 0
+            let wantsCmd   = (shortcutDef.modifierFlags & UInt32(cmdKey))     != 0
+            let wantsShift = (shortcutDef.modifierFlags & UInt32(shiftKey))   != 0
+            let wantsOpt   = (shortcutDef.modifierFlags & UInt32(optionKey))  != 0
+            let wantsCtrl  = (shortcutDef.modifierFlags & UInt32(controlKey)) != 0
 
-            guard keyCode == sc.keyCode,
+            guard keyCode == shortcutDef.keyCode,
                   flags.contains(.maskCommand)   == wantsCmd,
                   flags.contains(.maskShift)     == wantsShift,
                   flags.contains(.maskAlternate) == wantsOpt,

@@ -58,10 +58,13 @@ final class AppCoordinator {
         snippingWindowController.delegate  = self
 
         let shortcut = loadShortcut()
-        hotkeyManager.register(shortcut: shortcut) { [weak self] in
+        let registered = hotkeyManager.register(shortcut: shortcut) { [weak self] in
             MainActor.assumeIsolated {
                 self?.startCapture()
             }
+        }
+        if !registered {
+            promptForAccessibilityPermission()
         }
     }
 
@@ -77,6 +80,26 @@ final class AppCoordinator {
     private func saveShortcut(_ shortcut: KeyboardShortcut) {
         guard let data = try? JSONEncoder().encode(shortcut) else { return }
         UserDefaults.standard.set(data, forKey: Constants.shortcutDefaultsKey)
+    }
+
+    private func promptForAccessibilityPermission() {
+        let alert = NSAlert()
+        alert.messageText = "Accessibility Permission Required"
+        alert.informativeText = """
+            The global shortcut ⌘⇧2 requires Accessibility access so it fires \
+            even when Glazer AI is in the background.
+
+            Please grant access in System Settings → Privacy & Security → \
+            Accessibility, then relaunch Glazer AI.
+            """
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Later")
+        alert.alertStyle = .warning
+
+        if alert.runModal() == .alertFirstButtonReturn,
+           let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     private func checkPermissionOnLaunch() {
