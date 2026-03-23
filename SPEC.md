@@ -1,7 +1,7 @@
-# Glazer AI — Software Requirements Specification
+# GlazerAI — Software Requirements Specification
 
-**Version:** 3.0.0
-**Date:** 2026-03-21
+**Version:** 4.0.0
+**Date:** 2026-03-23
 **Status:** Living Document — update on every new requirement
 
 ---
@@ -10,12 +10,13 @@
 
 | Field | Value |
 |---|---|
-| App name | Glazer AI |
-| Purpose | macOS menu bar utility that captures a user-defined screen region, extracts text via OCR, and pipes the result through the `claude -p` CLI to produce AI-powered research output |
+| App name | GlazerAI |
+| Purpose | macOS menu bar utility that captures a LinkedIn profile screenshot, extracts text via OCR, researches the person via Claude CLI (with web search), and generates a personalised ≤300-char connection note |
 | Target platform | macOS 15.0+ (Sequoia) |
 | Language | Swift 6 strict concurrency |
-| UI framework | AppKit (menu bar, overlay, results window) + SwiftUI (results view) |
-| Architecture | Coordinator pattern — `AppCoordinator` owns all major subsystems and wires them together via protocol-based dependency injection |
+| UI framework | AppKit (menu bar, overlay) + SwiftUI (all windows) |
+| Architecture | Coordinator pattern — `AppCoordinator` owns all subsystems, wires them via protocol delegates |
+| Persistence | SQLite via GRDB.swift — `~/Library/Application Support/GlazerAI/glazes.db` |
 | Distribution | Local build / direct install (no App Store in v1) |
 
 ---
@@ -23,376 +24,346 @@
 ## 2. Pipeline
 
 ```
-Snip → OCR → Prompt Assembly → claude -p CLI → Results Window
+Snip → OCR → Prompt Assembly → claude -p (stdin) → JSON Parse → Results Window → SQLite
 ```
 
-1. User triggers capture via menu bar item (or future keyboard shortcut)
-2. Full-screen snipping overlay captures a rectangular region
-3. `ScreenCaptureService` produces a PNG `Data` blob
-4. `OCRService` extracts text from the image using Vision framework
-5. `PromptAssembler` wraps OCR text in a research prompt template
-6. `ClaudeRunner` invokes `claude -p "<prompt>"` and captures stdout
-7. `ResultsWindowController` displays the snip thumbnail, OCR text, and Claude response
+1. User left-clicks menu bar icon (requires resume uploaded; prompts if not)
+2. Full-screen snipping overlay with crosshair cursor
+3. `ScreenCaptureService` captures selected region → PNG `Data`
+4. `OCRService` extracts text via Vision framework; throws `OCRError.noTextFound` if blank
+5. `PromptAssembler` builds a research + ice-breaker prompt including sender's resume
+6. `ClaudeRunner` invokes `claude -p --output-format json --allowedTools web_search` via stdin
+7. Claude researches the person (web search), extracts profile fields, generates ice-breaker note
+8. Response parsed from JSON envelope → `ClaudeResponse`
+9. `ResultsWindowController` shows results; on success, record saved to SQLite
+10. User can optionally paste a job description to regenerate a targeted note
 
 ---
 
 ## 3. Features
 
 ### 3.1 Menu Bar Presence
-- The app runs exclusively as a menu bar agent (`LSUIElement = YES`); no Dock icon, no app switcher entry.
-- A single `NSStatusItem` is created at launch and persists for the lifetime of the process.
-- The status item displays a bundled donut icon (mingcute:donut-line) rendered as a template image (adapts to light/dark menu bar).
-- Clicking the status item opens the action menu.
+- Runs as a menu bar agent (`LSUIElement = YES`); no Dock icon.
+- Left-click → activate snipping (or show "upload resume" alert if not configured).
+- Right-click → context menu: **History…**, **Settings…**, separator, **Quit GlazerAI**.
 
-### 3.2 Action Menu
+### 3.2 Candidate Profile (Settings → Profile tab)
+- User uploads a resume PDF via drag-and-drop or file browser.
+- PDFKit extracts text from all pages.
+- Stored in `UserDefaults` as JSON-encoded `CandidateProfile { name, resumeText }`.
+- `isConfigured` = `!resumeText.isEmpty`.
+- If not configured when capture is triggered: modal alert with **Open Settings** / **Cancel**.
+- If already showing that alert and icon clicked again: focuses settings window instead of stacking.
 
-| Item | Action |
-|---|---|
-| **Capture Region** | Activates the snipping overlay |
-| *(separator)* | — |
-| **Quit Glazer AI** | Terminates the process |
+### 3.3 Snipping Overlay
+- Full-screen `SnippingWindow` (custom `NSWindow` subclass, `canBecomeKey = true`) at screen-saver level.
+- `NSApp.activate(ignoringOtherApps: true)` on present to steal focus.
+- Crosshair cursor via `NSCursor.crosshair.push()` + `NSTrackingArea`.
+- Instruction card overlay ("Drag to select a LinkedIn profile / Press Esc to cancel") shown before drag.
+- Click-drag draws selection rect with dimmed overlay (clear hole = selected region).
+- Mouse-up → confirms, triggers pipeline.
+- Escape → cancels (via `cancelOperation(_:)` override + `NSEvent.addLocalMonitorForEvents`).
+- `reset()` called on each presentation to clear previous rect.
 
-### 3.3 Permission Handling
-- **Screen Recording:** On launch, the app briefly sets activation policy to `.regular` and calls `SCShareableContent.current` (ScreenCaptureKit) to register with TCC and trigger the native macOS permission dialog. This is necessary because LSUIElement (background) apps have TCC dialogs suppressed. The policy reverts to `.accessory` after the prompt completes.
-- **Preflight check:** Before every capture, `CGPreflightScreenCaptureAccess()` is called. If permission has been revoked, a clear error message is shown instead of silently returning blank content.
+### 3.4 Screen Capture
+- `SCScreenshotManager.captureImage` (ScreenCaptureKit).
+- Excludes the snipping overlay window from capture.
+- Retina-aware coordinate conversion (AppKit → ScreenCaptureKit).
+- DEBUG builds: copies PNG to clipboard.
 
-### 3.4 Claude CLI Check
-- On launch, the app runs `which claude` via `Process` to verify the CLI is installed.
-- If not found: shows `NSAlert` with title **Glazer AI**, message explaining the CLI is required, and an **Install Claude CLI** button that opens `https://claude.ai/download`.
-- If found: the resolved path is stored in `CLIEnvironment.shared.claudePath` for use by `ClaudeRunner`.
-- The `claude` CLI is assumed to be installed and authenticated on the user's machine. Glazer AI does NOT manage authentication or API keys.
+### 3.5 OCR
+- `VNRecognizeTextRequest`, level `.accurate`, `automaticallyDetectsLanguage = true`.
+- Returns joined text observations; throws `OCRError.noTextFound` if empty → `NSAlert`.
 
-### 3.5 Snipping Overlay
-- Full-screen `NSWindow` covering the main screen (multi-monitor in a future release).
-- Window level: `NSWindow.Level.screenSaver` so it appears above all normal windows.
-- On presentation: screen dims (black fill, 40% opacity) over the entire display.
-- Cursor: crosshair (`NSCursor.crosshair`).
-- User click-drags to define a rectangular selection:
-  - The region inside the drag rect is rendered at full brightness (clear of the dim layer).
-  - A 1 pt blue (`#007AFF`) border outlines the selection.
-  - A label showing `W × H` (integer pixel dimensions) appears near the bottom-right handle of the rect.
-- **Cancel:** `Escape` key dismisses the overlay with no capture.
-- **Confirm:** releasing the mouse button (mouse-up) confirms the selection and triggers the pipeline.
+### 3.6 Prompt Assembly
+- `PromptAssembler` with two templates:
+  - **Default** (`defaultTemplate`): full research + ice-breaker prompt using `{ocr_text}` + `{candidate_profile}`. Instructs Claude to extract profile, web-search the person, generate ≤300-char note, return strict JSON.
+  - **Refinement** (`iceBreakerRefinementTemplate`): focused prompt using `{profile_summary}` + `{candidate_profile}` + `{job_description}`. Regenerates only the ice-breaker note. Returns minimal JSON `{"status","iceBreakerNote","message"}`.
 
-### 3.6 Screen Capture
-- On confirmation, `SCScreenshotManager.captureImage` (ScreenCaptureKit) captures the selected region.
-- The capture excludes the Glazer AI overlay window via `SCContentFilter(display:excludingApplications:)`.
-- Coordinate conversion from AppKit screen coordinates (origin bottom-left) to display-local ScreenCaptureKit coordinates (origin top-left) follows the same approach as [ScrollSnap](https://github.com/Brkgng/ScrollSnap).
-- Handles Retina (HiDPI) scaling via `filter.pointPixelScale`.
-- Output: PNG `Data` blob.
-- In DEBUG builds: copies the captured PNG to the system clipboard for visual verification.
-
-### 3.7 OCR (Optical Character Recognition)
-- Uses Vision framework `VNRecognizeTextRequest`.
-- Recognition level: `.accurate`.
-- `automaticallyDetectsLanguage = true`.
-- Runs on a background actor (`async`/`await`, Swift 6 concurrency).
-- Returns recognised text observations joined by newline.
-- Throws `OCRError.noTextFound` if no text is detected (shown via `NSAlert`).
-
-### 3.8 Research Prompt Assembly
-- `PromptAssembler` struct with a `static let defaultTemplate` constant.
-- Default template:
-  ```
-  The following text was extracted from a screenshot. Please research this topic thoroughly
-  and provide a concise, well-structured summary with key facts and relevant context:
-
-  {ocr_text}
-  ```
-- `func assemble(ocrText: String) -> String` replaces the `{ocr_text}` placeholder.
-
-### 3.9 Claude CLI Invocation
+### 3.7 Claude CLI Invocation
 - `ClaudeRunner` actor wraps `Process` / `Foundation.Pipe`.
-- Runs: `claude -p "<assembled prompt>"` using the path from `CLIEnvironment`.
-- Captures `stdout` (response text) and `stderr` (error detail).
-- 60-second timeout; kills process and throws `ClaudeError.timeout` if exceeded.
-- Non-zero exit code throws `ClaudeError.executionFailed(stderr: String)`.
-- Entire pipeline is `async throws`.
+- Prompt written to **stdin**; process launched via `/bin/zsh -l -c`.
+- Command: `claude -p --output-format json --allowedTools web_search`
+- 120-second timeout (web search requires more time than plain inference).
+- `ClaudeOutputEnvelope { is_error, result, usage { input_tokens, output_tokens } }` parsed from stdout JSON.
+- On success: token counts forwarded to `SessionUsage.shared`.
+- On `is_error: true`: throws `ClaudeError.executionFailed`.
 
-### 3.10 Results Window
-- `ResultsWindowController` (`NSWindowController`) hosting a SwiftUI `ResultsView`.
-- Window title: **Glazer AI — Results**.
-- Layout:
-  - Top: thumbnail of snipped image (max 200pt tall, aspect-fit, rounded corners).
-  - Middle (collapsible `DisclosureGroup`): **Extracted Text** — raw OCR output, monospaced, selectable.
-  - Bottom (scrollable): **Claude's Response** — full stdout, selectable, monospaced font.
-  - Toolbar buttons: **Copy Response** (copies stdout to clipboard), **Close**.
-- Each snip opens a new results window (windows stack; user closes manually).
-- Shows a `ProgressView` with label "Thinking…" while the pipeline is running.
+### 3.8 Response Parsing
+- `ClaudeResponse` Codable schema:
+  ```
+  { status, profile, research, iceBreakerNote, summary, message }
+  ```
+- `status`: `"success"` or `"no_profile_found"`.
+- `profile`: `{ name, headline, company, location, connections, about, experience[], education[], skills[] }`.
+- `research`: `{ recentActivity[], publications[], companyContext, conversationAngles[] }`.
+- `ClaudeResponse.parse(from:)` strips markdown fences before decoding.
 
-### 3.11 Debug / Clipboard
-- The captured PNG is copied to the macOS clipboard on every snip in DEBUG builds for visual verification.
+### 3.9 Results Window
+- Shows: snip thumbnail, collapsible OCR text, ice-breaker card (char counter, Copy Note), profile fields, research, summary.
+- **Tailor to Job** section: optional TextEditor + "Regenerate Note" button. Triggers `assembleRefinement` + re-run → patches the displayed note and updates the DB record.
+- On `no_profile_found`: closes results window, shows `NSAlert`.
+- Each snip opens a new results window (windows stack).
 
----
+### 3.10 History
+- Right-click → **History…** opens `HistoryWindowController`.
+- `NavigationSplitView`: sidebar lists glazes (name, company, date) with `.searchable` filter by name/company/headline.
+- Sidebar reloads on `NSWindow.didBecomeKeyNotification`.
+- Detail panel shows: ice-breaker card, tailored note (if present, with job description), profile summary, research bullets, delete button.
 
-## 4. UI/UX Details
+### 3.11 SQLite Persistence (`GlazeStore`)
+- Database: `~/Library/Application Support/GlazerAI/glazes.db`.
+- `GlazeRecord` schema:
 
-### 4.1 Menu Bar Icon
-- Bundled icon: `mingcute:donut-line` (Iconify) rendered as 18×18pt / 36×36px PNG with `template-rendering-intent: template`.
-- Fallback: SF Symbol `circle.dashed` if bundled asset is missing.
-- Size: 18 × 18 pt, explicitly set on `NSImage.size` to prevent overflow.
-
-### 4.2 Snipping Surface Behaviour
-1. Menu item fires → overlay window appears instantly (no animation).
-2. User moves mouse → crosshair cursor shown.
-3. Mouse-down → anchor point recorded.
-4. Mouse-drag → live rect drawn; dim layer has a clear hole matching the rect; blue border and dimension label update in real time.
-5. Mouse-up → rect finalised → overlay dismissed → pipeline begins.
-6. Escape at any point → overlay dismissed → no capture.
-
-### 4.3 Results Window Layout
-```
-┌─────────────────────────────────────┐
-│  Glazer AI — Results           [×]  │
-├─────────────────────────────────────┤
-│  ┌─────────────────────────────┐    │
-│  │     Snip Thumbnail          │    │
-│  │     (max 200pt tall)        │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ▶ Extracted Text                   │
-│  ┌─────────────────────────────┐    │
-│  │ (collapsed OCR text)        │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  Claude's Response                  │
-│  ┌─────────────────────────────┐    │
-│  │ (scrollable, monospaced)    │    │
-│  │ ...                         │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  [Copy Response]        [Close]     │
-└─────────────────────────────────────┘
-```
-
----
-
-## 5. Keyboard Shortcuts
-
-| Shortcut | Action | Configurable |
+| Column | Type | Notes |
 |---|---|---|
-| Escape | Cancel snipping overlay | No |
+| `id` | INTEGER PK | auto-increment |
+| `createdAt` | DATETIME | pipeline completion time |
+| `name` | TEXT | from profile |
+| `headline` | TEXT | from profile |
+| `company` | TEXT | from profile |
+| `location` | TEXT | from profile |
+| `iceBreakerNote` | TEXT | generated note |
+| `summary` | TEXT | 2-3 sentence narrative |
+| `ocrText` | TEXT | raw OCR input |
+| `researchJSON` | TEXT | `ResearchData` as JSON blob |
+| `imageData` | BLOB | PNG screenshot |
+| `jobDescription` | TEXT | optional, from Tailor section |
+| `tailoredNote` | TEXT | regenerated note with JD |
 
-Global keyboard shortcut feature (⌘⇧2) is currently disabled. The `GlobalHotkeyManager` code remains in the repo but is not wired into `AppCoordinator`. Re-enabling is planned for a future release.
+- Migrations: `v1_create_glazes`, `v2_add_job_description`.
+- Methods: `insert(_:)`, `update(_:)`, `delete(id:)`, `fetchAll()`.
+
+### 3.12 Settings Window
+- Two tabs:
+  - **Profile** — name field + resume PDF upload (drag-and-drop or browse).
+  - **Usage** — session token stats (glazes, input tokens, output tokens, total). Resets on app restart.
+- Save disabled until name + resumeText both non-empty.
+- `SettingsWindowController` lazy-init (singleton per session).
+
+### 3.13 Token Tracking (`SessionUsage`)
+- `@MainActor @Observable` singleton.
+- `record(inputTokens:outputTokens:)` is `nonisolated` — callable from `ClaudeRunner` actor.
+- Counts: `glazeCount`, `inputTokens`, `outputTokens`, `totalTokens`.
+- Displayed in Settings → Usage tab.
+
+### 3.14 Debug Console
+- `--debug` launch flag: `./scripts/launch.sh --debug`
+- Enables `DebugLogger.shared.isEnabled = true` and opens `DebugConsoleWindowController`.
+- Floating monospaced window with timestamp / tag / message columns.
+- Filter bar (text search + tag picker), Clear button, auto-scroll to latest.
+- Tags: `GlazerAI`, `Claude` (prompt/response text), `CLI`, `OCR`, `DB`, `Error`, `Debug`, `App`.
+- All `print(...)` calls replaced with `debugLog(_:tag:)` throughout codebase.
+
+### 3.15 Claude CLI Check
+- On launch: `which claude` via interactive login shell; fallbacks to well-known paths.
+- Not found → `NSAlert` with **Install** button → `https://claude.ai/download` → `NSApp.terminate`.
+- Found → `claude auth status --json` → parses `{ loggedIn, email, subscriptionType }`.
+- Not logged in → `NSAlert` warning (non-fatal, proceeds).
+- Path cached in `CLIEnvironment.shared.claudePath`.
+
+### 3.16 Screen Recording Permission
+- On launch: briefly sets activation policy to `.regular`, calls `SCShareableContent.current` to trigger TCC prompt, then reverts to `.accessory`.
 
 ---
 
-## 6. Error Handling
+## 4. Error Handling
 
-All errors are surfaced via `NSAlert` with title **Glazer AI** and actionable recovery text:
-
-| Error | Message |
+| Error | Handling |
 |---|---|
-| Screen Recording not granted | "Go to System Settings → Privacy & Security → Screen Recording and enable Glazer AI" |
-| claude CLI not found | "The Claude CLI is required. Click Install to download it." |
-| claude non-zero exit | stderr content displayed |
-| claude timeout (60s) | "The Claude CLI did not respond within 60 seconds." |
-| OCR no text found | "No text was detected in the captured region." |
-| Empty capture | "The selected region is too small to capture." |
+| Resume not configured | Modal alert "Upload Your Resume First" + Open Settings button |
+| Screen capture permission denied | `NSAlert` with instructions |
+| claude CLI not found | `NSAlert` + Install button + `NSApp.terminate` |
+| claude not authenticated | `NSAlert` warning (non-fatal) |
+| claude timeout (120s) | `ClaudeError.timeout` → pipeline error alert |
+| claude non-zero exit | stderr content in alert |
+| OCR no text found | `NSAlert` before results window opens |
+| `no_profile_found` JSON status | Close results window + `NSAlert` |
+| DB write failure | Logged via `debugLog`, not shown to user |
 
 ---
 
-## 7. Data Flow
+## 5. Data Flow
 
 ```
-User (menu item)
+User (left-click icon)
         │
         ▼
- AppCoordinator.startCapture()
+AppCoordinator.startCapture()
+        │  guard candidateProfile.isConfigured
+        ▼
+SnippingWindowController.present()
+        │  (user drags rect, releases mouse)
+        ▼
+ScreenCaptureService.capture(rect:) → Data (PNG)
         │
         ▼
- SnippingWindowController.present()
-        │  (user drags rect)
+OCRService.recognizeText(in:) → String
+        │  throws OCRError.noTextFound → NSAlert
         ▼
- SnippingWindowController.confirm(rect: CGRect)
+ResultsWindowController.show()   ← opens immediately with spinner
         │
         ▼
- ScreenCaptureService.capture(rect:) → Data (PNG)
-        │   (SCScreenshotManager.captureImage)
-        │   (DEBUG: copy to clipboard)
-        ▼
- OCRService.recognizeText(in:) → String
-        │   (VNRecognizeTextRequest)
-        ▼
- PromptAssembler.assemble(ocrText:) → String
+PromptAssembler.assemble(ocrText:candidateProfile:) → String
         │
         ▼
- ClaudeRunner.run(prompt:) → String
-        │   (claude -p "<prompt>")
+ClaudeRunner.run(prompt:) → String   [stdin, 120s timeout, web_search]
+        │  → ClaudeOutputEnvelope → SessionUsage.record(tokens)
         ▼
- ResultsWindowController
- ├─ snip thumbnail
- ├─ OCR text (collapsible)
- └─ Claude response (scrollable, copyable)
+ClaudeResponse.parse(from:) → ClaudeResponse
+        │  no_profile_found → close results + NSAlert
+        │  success →
+        ▼
+ResultsWindowController update + GlazeStore.insert()
+
+Optional refinement:
+User pastes JD → "Regenerate Note" →
+PromptAssembler.assembleRefinement(...) →
+ClaudeRunner.run(...) →
+vm.applyRefinedNote(_:) + GlazeStore.update(_:)
 ```
 
 ---
 
-## 8. File & Folder Structure
+## 6. File & Folder Structure
 
 ```
 GlazerAI/
 ├── GlazerAI.xcodeproj/
-│   └── project.pbxproj
-├── GlazerAI/                            # App target sources
+├── GlazerAI/
 │   ├── App/
-│   │   ├── GlazerAIApp.swift            # @main entry point, creates AppCoordinator
+│   │   ├── GlazerAIApp.swift            # @main, AppDelegate, --debug flag detection
 │   │   └── AppCoordinator.swift         # Owns and wires all subsystems
 │   ├── MenuBar/
-│   │   └── MenuBarController.swift      # NSStatusItem setup and menu construction
+│   │   └── MenuBarController.swift      # NSStatusItem; left=snip, right=context menu
 │   ├── Snipping/
-│   │   ├── SnippingWindowController.swift  # Full-screen overlay NSWindow
-│   │   └── SnippingView.swift              # NSView subclass drawing dim+rect+label
+│   │   ├── SnippingWindowController.swift
+│   │   └── SnippingView.swift
 │   ├── Capture/
-│   │   └── ScreenCaptureService.swift      # SCScreenshotManager wrapper
+│   │   └── ScreenCaptureService.swift
 │   ├── OCR/
-│   │   └── OCRService.swift                # Vision framework text recognition
+│   │   └── OCRService.swift
 │   ├── Prompt/
-│   │   └── PromptAssembler.swift           # Research prompt template + assembly
+│   │   └── PromptAssembler.swift        # defaultTemplate + iceBreakerRefinementTemplate
 │   ├── CLI/
-│   │   ├── CLIEnvironment.swift            # claude CLI path resolution
-│   │   └── ClaudeRunner.swift              # Process wrapper for claude -p
+│   │   ├── CLIEnvironment.swift
+│   │   ├── ClaudeRunner.swift           # stdin prompt, envelope parse, token tracking
+│   │   └── ClaudeResponse.swift         # Codable JSON schema
 │   ├── Results/
-│   │   ├── ResultsWindowController.swift   # NSWindowController for results
-│   │   ├── ResultsView.swift               # SwiftUI view
-│   │   └── ResultsViewModel.swift          # Observable state for results
-│   ├── Backend/
-│   │   ├── AIBackendService.swift          # Protocol + error enum (kept for testing)
-│   │   └── MockAIBackendService.swift      # Mock implementation (kept for testing)
-│   ├── Settings/                           # (disabled — files kept for future use)
+│   │   ├── ResultsWindowController.swift
+│   │   ├── ResultsView.swift            # ice-breaker card + Tailor to Job section
+│   │   └── ResultsViewModel.swift       # ResultsViewModelDelegate protocol
+│   ├── History/
+│   │   ├── GlazeRecord.swift            # GRDB FetchableRecord + MutablePersistableRecord
+│   │   ├── GlazeStore.swift             # Repository (insert/update/delete/fetchAll)
+│   │   └── HistoryWindowController.swift # NavigationSplitView with search
+│   ├── Settings/
 │   │   ├── SettingsWindowController.swift
-│   │   ├── SettingsView.swift
-│   │   └── ShortcutRecorderView.swift
-│   ├── Hotkey/                             # (disabled — not wired into coordinator)
-│   │   └── GlobalHotkeyManager.swift
-│   ├── Resources/
-│   │   ├── Assets.xcassets/
-│   │   │   └── MenuBarIcon.imageset/       # Donut icon (1x + 2x PNG, template)
-│   │   └── Info.plist
-│   └── Support/
-│       └── Constants.swift
-├── GlazerAITests/                     # Unit test target
-│   ├── RectCalculationTests.swift
-│   ├── CoordinateConversionTests.swift
-│   ├── OCRServiceTests.swift
-│   ├── PromptAssemblerTests.swift
-│   ├── ClaudeRunnerTests.swift
-│   ├── ResultsViewModelTests.swift
-│   ├── MockAIBackendServiceTests.swift
-│   └── IntegrationSmokeTest.swift
+│   │   ├── SettingsView.swift           # TabView: Profile + Usage tabs
+│   │   ├── UsageView.swift              # Session token stats grid
+│   │   ├── CandidateProfile.swift
+│   │   └── ShortcutRecorderView.swift   # (unused, kept for future)
+│   ├── Debug/
+│   │   ├── DebugLogger.swift            # ObservableObject singleton + debugLog()
+│   │   └── DebugConsoleWindowController.swift
+│   ├── Support/
+│   │   ├── Constants.swift
+│   │   └── SessionUsage.swift           # @Observable token counter
+│   ├── Backend/
+│   │   ├── AIBackendService.swift       # (kept for testing)
+│   │   └── MockAIBackendService.swift
+│   ├── Hotkey/
+│   │   └── GlobalHotkeyManager.swift    # (disabled, not wired)
+│   └── Resources/
+│       ├── Assets.xcassets/
+│       └── Info.plist
+├── GlazerAITests/
 ├── scripts/
-│   ├── launch.sh                    # Build + launch (--reset to wipe TCC)
+│   ├── launch.sh        # --debug and --reset flags supported
 │   ├── lint.sh
 │   ├── test.sh
 │   ├── build.sh
 │   └── ci.sh
-├── Makefile
-├── project.yml                      # xcodegen project definition
+├── project.yml          # xcodegen; includes GRDB SPM package
 ├── .swiftlint.yml
-├── .gitignore
-└── SPEC.md                          # This document
+└── SPEC.md
 ```
 
 ---
 
-## 9. Build & Run Instructions
+## 7. Build & Run
 
 ### Prerequisites
 - macOS 15.0+ (Sequoia)
-- Xcode 16.0+ (Xcode 26 confirmed working)
-- Swift 6
+- Xcode 16+, Swift 6
 - SwiftLint (`brew install swiftlint`)
 - xcodegen (`brew install xcodegen`) — only needed when modifying `project.yml`
-- `claude` CLI installed and authenticated (`https://claude.ai/download`)
+- `claude` CLI installed and authenticated
 
-### Quick Launch
+### Launch
 ```bash
-./scripts/launch.sh          # Build and launch
-./scripts/launch.sh --reset  # Build, wipe TCC permissions, launch
+./scripts/launch.sh           # normal
+./scripts/launch.sh --debug   # with floating debug console
+./scripts/launch.sh --reset   # wipe TCC permissions + launch
 ```
 
-### CLI build
+### CLI
 ```bash
-make ci        # lint → test → build
-make build     # build only
-make test      # unit tests only
-make lint      # SwiftLint only
+make ci       # lint → test → build
+make build
+make test
+make lint
 ```
 
 ### xcodegen Note
-Running `xcodegen generate` overwrites `Info.plist`, removing custom keys (`LSUIElement`, `NSScreenCaptureUsageDescription`, `CFBundleDisplayName`). Always restore them after regeneration.
+`xcodegen generate` wipes three Info.plist keys. Always restore after regenerating:
+- `CFBundleDisplayName` = `GlazerAI`
+- `LSUIElement` = `<true/>`
+- `NSScreenCaptureUsageDescription` = `GlazerAI needs Screen Recording permission to capture the selected screen region.`
 
 ---
 
-## 10. CI/CD
-
-### Local Pipeline (`scripts/ci.sh`)
-```
-lint → test → build
-```
-Each step exits non-zero on failure; the pipeline stops immediately.
-
-### Script Descriptions
-| Script | What it does |
-|---|---|
-| `launch.sh` | Kills existing instance, builds, optionally resets TCC (`--reset`), launches |
-| `lint.sh` | Runs `swiftlint lint --strict`; exits 1 on any violation |
-| `test.sh` | Runs `xcodebuild test -scheme GlazerAITests`; exits 1 on failure |
-| `build.sh` | Runs `xcodebuild build -scheme GlazerAI`; exits 1 on failure |
-| `ci.sh` | Chains lint → test → build |
-
----
-
-## 11. Commit Strategy
-
-- Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `perf:`
-- One atomic feature per commit
-- Each commit must pass `make ci` before being recorded
-
----
-
-## 12. Testing Strategy
+## 8. Testing
 
 | Test file | What is tested |
 |---|---|
-| `RectCalculationTests` | Rectangle normalisation (negative width/height), small-rect rejection |
-| `CoordinateConversionTests` | AppKit → CG coordinate conversion formula |
-| `OCRServiceTests` | Text extraction, empty-result error handling |
-| `PromptAssemblerTests` | Placeholder substitution, empty OCR text handling |
-| `ClaudeRunnerTests` | stdout capture, timeout, non-zero exit error |
+| `RectCalculationTests` | Rectangle normalisation, small-rect rejection |
+| `CoordinateConversionTests` | AppKit → CG coordinate conversion |
+| `OCRServiceTests` | Text extraction, empty-result error |
+| `PromptAssemblerTests` | Placeholder substitution (ocrText + candidateProfile) |
+| `ClaudeRunnerTests` | notFound error, timeout message, executionFailed |
+| `ClaudeResponseTests` | JSON parsing, no_profile_found status |
 | `ResultsViewModelTests` | State transitions (loading → success → error) |
-| `MockAIBackendServiceTests` | Empty-payload error, success path byte count |
-| `IntegrationSmokeTest` | Full pipeline smoke test with mocked dependencies |
+| `MockAIBackendServiceTests` | Empty-payload error, success byte count |
+| `IntegrationSmokeTest` | Pipeline smoke test with mocked dependencies |
 
 Target coverage: ≥ 80% of non-UI source lines.
 
 ---
 
-## 13. Linting
+## 9. Linting
 
-`.swiftlint.yml` rules enabled:
+`.swiftlint.yml` rules:
 
 | Rule | Threshold |
 |---|---|
 | `force_cast` | error |
 | `force_try` | error |
 | `implicitly_unwrapped_optional` | warning |
-| `line_length` | warning at 120, error at 200 |
-| `file_length` | warning at 400, error at 800 |
-| `function_body_length` | warning at 40, error at 60 |
-| `cyclomatic_complexity` | warning at 10, error at 20 |
-
-SwiftLint runs as a build phase Run Script in Xcode and via `scripts/lint.sh`.
+| `line_length` | warning 120, error 200 |
+| `file_length` | warning 400, error 800 |
+| `function_body_length` | warning 40, error 60 |
+| `cyclomatic_complexity` | warning 10, error 20 |
+| `identifier_name` excluded | `db`, `id`, `vm`, `jd`, `n` |
 
 ---
 
-## 14. Open Questions / Future Work
+## 10. Open Items / Future Work
 
-- **TODO:** Re-enable global keyboard shortcut (⌘⇧2) with proper Accessibility permission handling.
-- **TODO:** Add Settings panel with shortcut recorder, editable research prompt, CLI path display.
-- **TODO:** Streaming Claude output to results window (progressive rendering).
-- Multi-monitor support: extend snipping overlay to span all screens.
-- Annotation tools: arrows, text, blur before sending.
-- Capture history: local log of previous snips.
-- Sandboxing / App Store distribution: requires entitlement changes.
-- Accessibility: VoiceOver support.
+- Re-enable global keyboard shortcut with Accessibility permission handling.
+- Streaming Claude output to results window (progressive rendering).
+- Multi-monitor snipping overlay.
+- Export history to CSV / JSON.
+- Sandboxing / App Store distribution.
+- Persist token usage across sessions (currently resets on restart).
+- Annotation tools (arrows, blur) before capture.

@@ -19,10 +19,10 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>CFBundleDisplayName</key>
-	<string>Glazer AI</string>
+	<string>GlazerAI</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSScreenCaptureUsageDescription</key>
-	<string>Glazer AI needs Screen Recording permission to capture the selected screen region.</string>
+	<string>GlazerAI needs Screen Recording permission to capture the selected screen region.</string>
 </dict>
 </plist>

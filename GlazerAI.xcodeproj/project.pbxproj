@@ -8,19 +8,26 @@
 
 /* Begin PBXBuildFile section */
 		010CBFB1F331DBF605F03EBB /* OCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23C0CB85B2CABB41473CD25C /* OCRService.swift */; };
+		094CAE34D4A23D23C8C7F43B /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BED9F04B9A26F4DA27F760A /* DebugLogger.swift */; };
 		09F4851804C44082411356FF /* CoordinateConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124735F325ECEE09430BA957 /* CoordinateConversionTests.swift */; };
 		0E3038B18BB94ABBE1B6A85D /* GlobalHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */; };
 		170226CC3ED67D991C5C4F40 /* ResultsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE51CB588D66983DAFBB0C3 /* ResultsViewModel.swift */; };
 		18E1EE28CC2DE49B81CF3581 /* ScreenCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3E6A3F978BC1E781A72AAFF /* ScreenCaptureService.swift */; };
 		23C03C8276D2B3FB650E964F /* ResultsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4211CE6DC16E4203586B1F /* ResultsViewModelTests.swift */; };
 		255DE60A17E937B70606B3EC /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E34A7908630963A4EB3012 /* Constants.swift */; };
+		257D164FE56A3429EA87D451 /* ClaudeResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DFFFBB515F5BD5A9AAF81F8 /* ClaudeResponseTests.swift */; };
+		3152D46BAA43D0243502C797 /* GlazeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F05D43639FFE37E412209F0 /* GlazeStore.swift */; };
+		3DF09F0AA5378E46B0DDECB3 /* HistoryWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449ED5DCA5BF4E681A7A44F9 /* HistoryWindowController.swift */; };
+		47B4F094C612C457B2EBB774 /* DebugConsoleWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF5B38D96F1CAD4F83A1F15 /* DebugConsoleWindowController.swift */; };
 		506A593971417DFDB32372B7 /* PromptAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348DE49FEA6C7D50AD0A8B84 /* PromptAssembler.swift */; };
 		59C280BBCA7869A9C9CAB45D /* GlobalHotkeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */; };
 		6229C9E73BE224AF8CC4F103 /* GlazerAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1991914E41ED836086E01FA7 /* GlazerAIApp.swift */; };
 		6BFCA9BB55E17AC90453B4FF /* IntegrationSmokeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC4C48418C477B9FE2381B2A /* IntegrationSmokeTest.swift */; };
 		6CB6249458209B736CAD106F /* SnippingWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */; };
+		6E72B503CBEC268F268083A0 /* UsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A960D5325BBA24D9E30BBCE /* UsageView.swift */; };
 		7CDEFE6167657225E53A8C00 /* MockAIBackendServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */; };
 		85A00513AFD3E4328682CDBA /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */; };
+		85C793247A33D048033774C0 /* ClaudeResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799DA16BB78E6106BC700111 /* ClaudeResponse.swift */; };
 		8AA901654677E394E2E7BC1D /* MockAIBackendService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D51A2BEF291BF14A33DC680E /* MockAIBackendService.swift */; };
 		8CD0ABF47BC53CE62B8270CC /* SnippingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA7E5CA7EB21EA390CE1C7DE /* SnippingView.swift */; };
 		9FAFD6A5470A6FE3CC994B12 /* CLIEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1809B82116735F0A262DDC78 /* CLIEnvironment.swift */; };
@@ -29,6 +36,7 @@
 		ABFD33FBF38C468C0FE54210 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */; };
 		B23F59D605EA5CD029434845 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E659A65780F8E11474DDB7 /* MenuBarController.swift */; };
 		B4F9A14B26485F85C21ADDE9 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96E20713B22E332B0A41DBFF /* AppCoordinator.swift */; };
+		BC34A411A15A0F159CFF8C07 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = B4D8074A2500EB4AD61A8FDD /* GRDB */; };
 		BE2F8B669D826ECB5134EC92 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F63D0CD3F9717570C1CC4F /* ResultsView.swift */; };
 		C7489F370AA56A6C744EB480 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E6ED6F4A1D5778766FFC9518 /* Assets.xcassets */; };
 		D9AB9EC3C96FA54295DE0724 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128395F0AC6B8191EB0B269A /* SettingsView.swift */; };
@@ -36,8 +44,11 @@
 		E5D367DB1B269D04F5367BD0 /* UserDefaultsShortcutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4FA588D74C65B38E4C8A5D /* UserDefaultsShortcutTests.swift */; };
 		E82E4876466FD89D87D4838B /* AIBackendService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC4ACED9AFF6B589E150D99 /* AIBackendService.swift */; };
 		E8B6C2C1D7198EA7A6552FD9 /* OCRServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44C6129D9BED0D6C5D9B9238 /* OCRServiceTests.swift */; };
+		EA8701DF028B18C2B5E7B45C /* SessionUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1818CD65C3EF4224914DD9B9 /* SessionUsage.swift */; };
+		EFDA3BEC39E00590F61AA1D3 /* GlazeRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F8CB0E04AF6595C09169638 /* GlazeRecord.swift */; };
 		F28CCE30624F4F6F6DE43A05 /* PromptAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F2B2347000B59CB9EA6500 /* PromptAssemblerTests.swift */; };
 		F2B337642C9266E9A9ED52D1 /* ClaudeRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AD141B0247A19D47833357 /* ClaudeRunnerTests.swift */; };
+		F7C388C0E6E3CBAC3CF773D6 /* CandidateProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44D368E67BCA3F1192A0439 /* CandidateProfile.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,22 +65,30 @@
 		124735F325ECEE09430BA957 /* CoordinateConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinateConversionTests.swift; sourceTree = "<group>"; };
 		128395F0AC6B8191EB0B269A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1809B82116735F0A262DDC78 /* CLIEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIEnvironment.swift; sourceTree = "<group>"; };
+		1818CD65C3EF4224914DD9B9 /* SessionUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionUsage.swift; sourceTree = "<group>"; };
 		1991914E41ED836086E01FA7 /* GlazerAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlazerAIApp.swift; sourceTree = "<group>"; };
 		1EF11CB4CCE5A7C60322C060 /* RectCalculationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RectCalculationTests.swift; sourceTree = "<group>"; };
+		1F05D43639FFE37E412209F0 /* GlazeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlazeStore.swift; sourceTree = "<group>"; };
 		23C0CB85B2CABB41473CD25C /* OCRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRService.swift; sourceTree = "<group>"; };
 		2A4FA588D74C65B38E4C8A5D /* UserDefaultsShortcutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsShortcutTests.swift; sourceTree = "<group>"; };
 		2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManagerTests.swift; sourceTree = "<group>"; };
+		2A960D5325BBA24D9E30BBCE /* UsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageView.swift; sourceTree = "<group>"; };
+		2F8CB0E04AF6595C09169638 /* GlazeRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlazeRecord.swift; sourceTree = "<group>"; };
 		30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippingWindowController.swift; sourceTree = "<group>"; };
 		3340F592104A6A9E8AAEE30D /* MockAIBackendServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIBackendServiceTests.swift; sourceTree = "<group>"; };
 		348DE49FEA6C7D50AD0A8B84 /* PromptAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptAssembler.swift; sourceTree = "<group>"; };
 		39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
 		3AF42A0F68606EF9B308825C /* ResultsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsWindowController.swift; sourceTree = "<group>"; };
 		434B05EEFDC1CE1F6CB7BB3B /* GlazerAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GlazerAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		449ED5DCA5BF4E681A7A44F9 /* HistoryWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryWindowController.swift; sourceTree = "<group>"; };
 		44C6129D9BED0D6C5D9B9238 /* OCRServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRServiceTests.swift; sourceTree = "<group>"; };
 		61F63D0CD3F9717570C1CC4F /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		6AE51CB588D66983DAFBB0C3 /* ResultsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsViewModel.swift; sourceTree = "<group>"; };
 		6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		799DA16BB78E6106BC700111 /* ClaudeResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeResponse.swift; sourceTree = "<group>"; };
+		8BED9F04B9A26F4DA27F760A /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
 		8D8F5D0EAAF2FFCC5E748E21 /* GlobalHotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotkeyManager.swift; sourceTree = "<group>"; };
+		8DFFFBB515F5BD5A9AAF81F8 /* ClaudeResponseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeResponseTests.swift; sourceTree = "<group>"; };
 		96E20713B22E332B0A41DBFF /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		B3E6A3F978BC1E781A72AAFF /* ScreenCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCaptureService.swift; sourceTree = "<group>"; };
 		B647AA58768FAEBA5C10F859 /* ClaudeRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeRunner.swift; sourceTree = "<group>"; };
@@ -78,19 +97,33 @@
 		C8AD141B0247A19D47833357 /* ClaudeRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeRunnerTests.swift; sourceTree = "<group>"; };
 		C965E51836149F1F86CFEEA9 /* GlazerAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GlazerAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA7E5CA7EB21EA390CE1C7DE /* SnippingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippingView.swift; sourceTree = "<group>"; };
+		CAF5B38D96F1CAD4F83A1F15 /* DebugConsoleWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugConsoleWindowController.swift; sourceTree = "<group>"; };
 		D51A2BEF291BF14A33DC680E /* MockAIBackendService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAIBackendService.swift; sourceTree = "<group>"; };
 		E6ED6F4A1D5778766FFC9518 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		ECC4ACED9AFF6B589E150D99 /* AIBackendService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIBackendService.swift; sourceTree = "<group>"; };
 		F0E659A65780F8E11474DDB7 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		F44D368E67BCA3F1192A0439 /* CandidateProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateProfile.swift; sourceTree = "<group>"; };
 		FA4211CE6DC16E4203586B1F /* ResultsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsViewModelTests.swift; sourceTree = "<group>"; };
 		FC4C48418C477B9FE2381B2A /* IntegrationSmokeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationSmokeTest.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3BF3DD38FDD171EF52AB8648 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BC34A411A15A0F159CFF8C07 /* GRDB in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0854D8F5DFDCD75EFEB7C1ED /* Support */ = {
 			isa = PBXGroup;
 			children = (
 				C6E34A7908630963A4EB3012 /* Constants.swift */,
+				1818CD65C3EF4224914DD9B9 /* SessionUsage.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -120,6 +153,15 @@
 			);
 			sourceTree = "<group>";
 		};
+		35A4811344F685A31D246577 /* Debug */ = {
+			isa = PBXGroup;
+			children = (
+				CAF5B38D96F1CAD4F83A1F15 /* DebugConsoleWindowController.swift */,
+				8BED9F04B9A26F4DA27F760A /* DebugLogger.swift */,
+			);
+			path = Debug;
+			sourceTree = "<group>";
+		};
 		374B8F8AFB22E4D763F54A8B /* Snipping */ = {
 			isa = PBXGroup;
 			children = (
@@ -127,6 +169,16 @@
 				30A71DBFF7FCFBBA6AE212A2 /* SnippingWindowController.swift */,
 			);
 			path = Snipping;
+			sourceTree = "<group>";
+		};
+		3813D52BFD8E349A1946F1F6 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				2F8CB0E04AF6595C09169638 /* GlazeRecord.swift */,
+				1F05D43639FFE37E412209F0 /* GlazeStore.swift */,
+				449ED5DCA5BF4E681A7A44F9 /* HistoryWindowController.swift */,
+			);
+			path = History;
 			sourceTree = "<group>";
 		};
 		4CE2920C9B334A8911F9C827 /* App */ = {
@@ -176,6 +228,7 @@
 		A3F1316F3FD0DEE81A077FC9 /* CLI */ = {
 			isa = PBXGroup;
 			children = (
+				799DA16BB78E6106BC700111 /* ClaudeResponse.swift */,
 				B647AA58768FAEBA5C10F859 /* ClaudeRunner.swift */,
 				1809B82116735F0A262DDC78 /* CLIEnvironment.swift */,
 			);
@@ -193,6 +246,7 @@
 		CE7C7ABF791D9F35AF449172 /* GlazerAITests */ = {
 			isa = PBXGroup;
 			children = (
+				8DFFFBB515F5BD5A9AAF81F8 /* ClaudeResponseTests.swift */,
 				C8AD141B0247A19D47833357 /* ClaudeRunnerTests.swift */,
 				124735F325ECEE09430BA957 /* CoordinateConversionTests.swift */,
 				2A68568ECC363F668FD19BAD /* GlobalHotkeyManagerTests.swift */,
@@ -223,6 +277,8 @@
 				CEFE76DDEFF58D242CC36B31 /* Backend */,
 				8CCCAF1C323BF3E9B71974F2 /* Capture */,
 				A3F1316F3FD0DEE81A077FC9 /* CLI */,
+				35A4811344F685A31D246577 /* Debug */,
+				3813D52BFD8E349A1946F1F6 /* History */,
 				7E8D48FDEAF556EA2A796A35 /* Hotkey */,
 				F244E715DCFF892D854D5AEE /* MenuBar */,
 				1F9383314DC758F5AA6D1AEA /* OCR */,
@@ -239,9 +295,11 @@
 		E2256B6DD4ACF51C0CF02426 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				F44D368E67BCA3F1192A0439 /* CandidateProfile.swift */,
 				128395F0AC6B8191EB0B269A /* SettingsView.swift */,
 				6DEE7D0F10F48EA2D818B3DA /* SettingsWindowController.swift */,
 				39D0CC6003E697083437F8C6 /* ShortcutRecorderView.swift */,
+				2A960D5325BBA24D9E30BBCE /* UsageView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -282,6 +340,7 @@
 				67B858F1701299AE19CB2662 /* SwiftLint */,
 				10043B2EF32928DC47C46234 /* Sources */,
 				3E0609C6D416F89FE4497F6B /* Resources */,
+				3BF3DD38FDD171EF52AB8648 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -289,6 +348,7 @@
 			);
 			name = GlazerAI;
 			packageProductDependencies = (
+				B4D8074A2500EB4AD61A8FDD /* GRDB */,
 			);
 			productName = GlazerAI;
 			productReference = 434B05EEFDC1CE1F6CB7BB3B /* GlazerAI.app */;
@@ -321,6 +381,9 @@
 			);
 			mainGroup = 2E9110A6E05CDE4501075640;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				43633793017B5D96DF61DEEF /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 520659F33A9FF8C49C3B2C9A /* Products */;
 			projectDirPath = "";
@@ -373,10 +436,17 @@
 				E82E4876466FD89D87D4838B /* AIBackendService.swift in Sources */,
 				B4F9A14B26485F85C21ADDE9 /* AppCoordinator.swift in Sources */,
 				9FAFD6A5470A6FE3CC994B12 /* CLIEnvironment.swift in Sources */,
+				F7C388C0E6E3CBAC3CF773D6 /* CandidateProfile.swift in Sources */,
+				85C793247A33D048033774C0 /* ClaudeResponse.swift in Sources */,
 				DBF7588E05FDBC9D2C05BE75 /* ClaudeRunner.swift in Sources */,
 				255DE60A17E937B70606B3EC /* Constants.swift in Sources */,
+				47B4F094C612C457B2EBB774 /* DebugConsoleWindowController.swift in Sources */,
+				094CAE34D4A23D23C8C7F43B /* DebugLogger.swift in Sources */,
+				EFDA3BEC39E00590F61AA1D3 /* GlazeRecord.swift in Sources */,
+				3152D46BAA43D0243502C797 /* GlazeStore.swift in Sources */,
 				6229C9E73BE224AF8CC4F103 /* GlazerAIApp.swift in Sources */,
 				0E3038B18BB94ABBE1B6A85D /* GlobalHotkeyManager.swift in Sources */,
+				3DF09F0AA5378E46B0DDECB3 /* HistoryWindowController.swift in Sources */,
 				B23F59D605EA5CD029434845 /* MenuBarController.swift in Sources */,
 				8AA901654677E394E2E7BC1D /* MockAIBackendService.swift in Sources */,
 				010CBFB1F331DBF605F03EBB /* OCRService.swift in Sources */,
@@ -385,11 +455,13 @@
 				170226CC3ED67D991C5C4F40 /* ResultsViewModel.swift in Sources */,
 				A4814DC9FF83D1762FB95D19 /* ResultsWindowController.swift in Sources */,
 				18E1EE28CC2DE49B81CF3581 /* ScreenCaptureService.swift in Sources */,
+				EA8701DF028B18C2B5E7B45C /* SessionUsage.swift in Sources */,
 				D9AB9EC3C96FA54295DE0724 /* SettingsView.swift in Sources */,
 				ABFD33FBF38C468C0FE54210 /* SettingsWindowController.swift in Sources */,
 				85A00513AFD3E4328682CDBA /* ShortcutRecorderView.swift in Sources */,
 				8CD0ABF47BC53CE62B8270CC /* SnippingView.swift in Sources */,
 				6CB6249458209B736CAD106F /* SnippingWindowController.swift in Sources */,
+				6E72B503CBEC268F268083A0 /* UsageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -397,6 +469,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				257D164FE56A3429EA87D451 /* ClaudeResponseTests.swift in Sources */,
 				F2B337642C9266E9A9ED52D1 /* ClaudeRunnerTests.swift in Sources */,
 				09F4851804C44082411356FF /* CoordinateConversionTests.swift in Sources */,
 				59C280BBCA7869A9C9CAB45D /* GlobalHotkeyManagerTests.swift in Sources */,
@@ -655,6 +728,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		43633793017B5D96DF61DEEF /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.29.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B4D8074A2500EB4AD61A8FDD /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 43633793017B5D96DF61DEEF /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 81C897D3642F6C8043A29D9F /* Project object */;
 }

@@ -1,27 +1,26 @@
 // SettingsWindowController.swift
 // GlazerAI
 //
-// Wraps the SwiftUI SettingsView in an NSWindowController so it can be
-// presented as a floating panel from the menu bar.
+// Wraps SettingsView in an NSWindowController. Loads the saved
+// CandidateProfile on open and persists it on save.
 
 import AppKit
 import SwiftUI
 
-/// Presents and manages the Glazer AI settings panel.
+/// Presents the candidate profile settings panel.
 final class SettingsWindowController: NSWindowController {
 
     // MARK: - Init
 
-    /// Creates the settings window hosting a ``SettingsView``.
-    ///
-    /// - Parameter onSave: Called with the new shortcut string when the user taps Save.
-    init(onSave: @escaping (String) -> Void) {
-        // Use a relay so we can reference `self` after super.init.
+    init(onSave: @escaping (CandidateProfile) -> Void) {
         let relay = ActionRelay()
+        let profile = CandidateProfile.load()
 
         let settingsView = SettingsView(
-            onSave: { shortcut in
-                onSave(shortcut)
+            profile: profile,
+            onSave: { saved in
+                saved.save()
+                onSave(saved)
                 relay.action?()
             },
             onCancel: {
@@ -31,24 +30,21 @@ final class SettingsWindowController: NSWindowController {
 
         let hosting = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hosting)
-        window.title = "Glazer AI Settings"
+        window.title = "GlazerAI Settings"
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.center()
 
         super.init(window: window)
-
-        // Wire close action now that self is available.
         relay.action = { [weak self] in self?.close() }
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) is not supported — use init(onSave:)")
+        fatalError("init(coder:) is not supported")
     }
 
     // MARK: - Public API
 
-    /// Shows the settings window and brings it to the front.
     func present() {
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
@@ -58,8 +54,6 @@ final class SettingsWindowController: NSWindowController {
 
 // MARK: - Helpers
 
-/// Lightweight indirection that breaks the self-before-super-init cycle.
 private final class ActionRelay {
-    /// Closure set after `super.init` completes.
     var action: (() -> Void)?
 }

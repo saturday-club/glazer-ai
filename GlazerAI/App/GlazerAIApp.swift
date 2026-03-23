@@ -30,8 +30,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The single coordinator instance for the lifetime of the app.
     private var coordinator: AppCoordinator?
+    /// Debug console — allocated only when --debug is passed.
+    private var debugConsole: DebugConsoleWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if CommandLine.arguments.contains("--debug") {
+            DebugLogger.shared.isEnabled = true
+            let console = DebugConsoleWindowController()
+            debugConsole = console
+            console.present()
+            debugLog("Debug mode enabled", tag: "App")
+        }
+
         // Note: activation policy is set to .accessory inside AppCoordinator
         // after the permission prompt completes, so we do NOT set it here.
         coordinator = AppCoordinator()

@@ -1,11 +1,22 @@
 // CLIEnvironment.swift
 // GlazerAI
 //
-// Resolves and stores the path to the `claude` CLI binary.
-// Checked once at launch; cached for the lifetime of the process.
+// Resolves and stores the path to the `claude` CLI binary and verifies
+// authentication status. Checked once at launch; cached for the process lifetime.
 
 import AppKit
 import Foundation
+
+// MARK: - Auth Status
+
+/// Parsed response from `claude auth status --json`.
+private struct ClaudeAuthStatus: Decodable {
+    let loggedIn: Bool
+    let email: String?
+    let subscriptionType: String?
+}
+
+// MARK: - Environment
 
 /// Resolves the `claude` CLI path at launch and provides it to `ClaudeRunner`.
 @MainActor
@@ -34,29 +45,32 @@ final class CLIEnvironment {
 
     // MARK: - Public API
 
-    /// Attempts to locate `claude` on `$PATH` via `/usr/bin/which`.
-    /// Shows an alert and returns `false` if the CLI is not found.
+    /// Locates `claude`, then verifies the user is authenticated.
+    /// Shows an appropriate alert and returns `false` on any failure.
     @discardableResult
     func resolve() async -> Bool {
-        let path = await locateClaude()
-        claudePath = path
-
-        if path == nil {
+        guard let path = await locateClaude() else {
             showNotFoundAlert()
             return false
         }
 
-        print("[Glazer AI] claude CLI found at: \(path ?? "nil")")
+        claudePath = path
+        debugLog("claude CLI found at: \(path)", tag: "CLI")
+
+        guard await checkAuth(claudePath: path) else {
+            return false
+        }
+
         return true
     }
 
-    // MARK: - Private
+    // MARK: - Private — Location
 
     /// Runs `which claude` to find the binary path, with fallbacks for common install locations.
     private func locateClaude() async -> String? {
         // Try interactive+login shell first — sources both .zprofile and .zshrc,
         // so user PATH additions in either file are visible.
-        if let path = await whichClaude(shellArgs: ["-i", "-l", "-c", "which claude 2>/dev/null"]) {
+        if let path = await runShell("-i", "-l", "-c", "which claude 2>/dev/null") {
             return path
         }
 
@@ -66,18 +80,18 @@ final class CLIEnvironment {
             "\(home)/.local/bin/claude",
             "\(home)/.claude/bin/claude",
             "/usr/local/bin/claude",
-            "/opt/homebrew/bin/claude",
+            "/opt/homebrew/bin/claude"
         ]
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    private func whichClaude(shellArgs: [String]) async -> String? {
+    private func runShell(_ args: String...) async -> String? {
         await withCheckedContinuation { continuation in
             let process = Process()
             let pipe = Pipe()
 
             process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-            process.arguments = shellArgs
+            process.arguments = args
             process.standardOutput = pipe
             process.standardError = FileHandle.nullDevice
 
@@ -93,7 +107,6 @@ final class CLIEnvironment {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
                 let output = String(data: data, encoding: .utf8)?
                     .trimmingCharacters(in: .whitespacesAndNewlines)
-
                 continuation.resume(returning: output?.isEmpty == false ? output : nil)
             } catch {
                 continuation.resume(returning: nil)
@@ -101,12 +114,57 @@ final class CLIEnvironment {
         }
     }
 
-    /// Displays an alert explaining that the Claude CLI is required.
+    // MARK: - Private — Auth
+
+    /// Runs `claude auth status --json` and returns `true` if the user is logged in.
+    /// Shows an alert and returns `false` if not authenticated.
+    private func checkAuth(claudePath: String) async -> Bool {
+        let json = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
+            let process = Process()
+            let pipe = Pipe()
+
+            process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+            process.arguments = ["-l", "-c", "\(claudePath) auth status --json"]
+            process.standardOutput = pipe
+            process.standardError = FileHandle.nullDevice
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: data, encoding: .utf8)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                continuation.resume(returning: output)
+            } catch {
+                continuation.resume(returning: nil)
+            }
+        }
+
+        guard let jsonStr = json,
+              let data = jsonStr.data(using: .utf8),
+              let status = try? JSONDecoder().decode(ClaudeAuthStatus.self, from: data) else {
+            // Could not parse auth status — allow through rather than block.
+            debugLog("Could not parse auth status; proceeding.", tag: "CLI")
+            return true
+        }
+
+        debugLog("Auth status: loggedIn=\(status.loggedIn), email=\(status.email ?? "?")", tag: "CLI")
+
+        if !status.loggedIn {
+            showNotLoggedInAlert()
+            return false
+        }
+
+        return true
+    }
+
+    // MARK: - Private — Alerts
+
     private func showNotFoundAlert() {
         let alert = NSAlert()
-        alert.messageText = "Glazer AI"
+        alert.messageText = "Claude CLI Not Found"
         // swiftlint:disable:next line_length
-        alert.informativeText = "The Claude CLI is required but was not found on your system. Please install it to use Glazer AI."
+        alert.informativeText = "The Claude CLI is required but was not found on your system. Please install it to use GlazerAI."
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Install Claude CLI")
         alert.addButton(withTitle: "Quit")
@@ -116,6 +174,18 @@ final class CLIEnvironment {
             if let url = URL(string: "https://claude.ai/download") {
                 NSWorkspace.shared.open(url)
             }
+        } else {
+            NSApp.terminate(nil)
         }
+    }
+
+    private func showNotLoggedInAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Not Logged In to Claude"
+        // swiftlint:disable:next line_length
+        alert.informativeText = "Glazer AI requires an active Claude session. Please run `claude` in your terminal and log in, then relaunch GlazerAI."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 }

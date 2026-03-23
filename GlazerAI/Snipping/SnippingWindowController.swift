@@ -21,6 +21,16 @@ protocol SnippingWindowControllerDelegate: AnyObject {
     func snippingWindowControllerDidCancel(_ controller: SnippingWindowController)
 }
 
+// MARK: - SnippingWindow
+
+/// Borderless NSWindow subclass that opts into key-window status.
+/// By default, borderless windows return false for canBecomeKey, which
+/// prevents them from ever receiving keyboard events.
+private final class SnippingWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 // MARK: - Controller
 
 /// Manages the full-screen overlay window for region selection.
@@ -33,6 +43,9 @@ final class SnippingWindowController: NSWindowController {
 
     private let snippingView: SnippingView
 
+    /// Local event monitor for Escape — catches keyDown before AppKit routing.
+    private var escapeMonitor: Any?
+
     // MARK: - Init
 
     /// Creates the overlay window covering the main screen.
@@ -40,7 +53,7 @@ final class SnippingWindowController: NSWindowController {
         let screen = NSScreen.main ?? NSScreen.screens[0]
         let snippingView = SnippingView(frame: screen.frame)
 
-        let window = NSWindow(
+        let window = SnippingWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
             backing: .buffered,
@@ -66,18 +79,48 @@ final class SnippingWindowController: NSWindowController {
 
     // MARK: - Public API
 
-    /// Presents the overlay and installs the crosshair cursor.
+    /// Presents the overlay with a clean slate, stealing focus from the frontmost app.
     func present() {
+        snippingView.reset()
+        // Activate this process so the overlay can become the key window.
+        // Without this, LSUIElement background apps can't steal focus.
+        NSApp.activate(ignoringOtherApps: true)
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         window?.makeFirstResponder(snippingView)
         NSCursor.crosshair.push()
+        installEscapeMonitor()
     }
 
     /// Dismisses the overlay and restores the default cursor.
     func dismiss() {
+        removeEscapeMonitor()
         NSCursor.pop()
         close()
+    }
+
+    // MARK: - Private
+
+    private func installEscapeMonitor() {
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if event.keyCode == 53 { // Escape
+                self?.cancel()
+                return nil // consume the event
+            }
+            return event
+        }
+    }
+
+    private func removeEscapeMonitor() {
+        if let monitor = escapeMonitor {
+            NSEvent.removeMonitor(monitor)
+            escapeMonitor = nil
+        }
+    }
+
+    private func cancel() {
+        dismiss()
+        delegate?.snippingWindowControllerDidCancel(self)
     }
 }
 
@@ -93,7 +136,6 @@ extension SnippingWindowController: SnippingViewDelegate {
     }
 
     func snippingViewDidCancel(_ view: SnippingView) {
-        dismiss()
-        delegate?.snippingWindowControllerDidCancel(self)
+        cancel()
     }
 }

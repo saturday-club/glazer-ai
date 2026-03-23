@@ -1,40 +1,35 @@
 // MenuBarController.swift
 // GlazerAI
 //
-// Owns the NSStatusItem and builds the action menu.
+// Owns the NSStatusItem.
+// Left-click on icon → activate snipping.
+// Right-click → minimal context menu (Settings, Quit).
 
 import AppKit
 import Foundation
 
 // MARK: - Delegate
 
-/// Handles actions triggered from the menu bar menu.
+/// Handles actions triggered from the menu bar.
 @MainActor
 protocol MenuBarControllerDelegate: AnyObject {
-    /// The user chose "Capture Region" from the menu.
     func menuBarControllerDidRequestCapture(_ controller: MenuBarController)
+    func menuBarControllerDidRequestHistory(_ controller: MenuBarController)
+    func menuBarControllerDidRequestSettings(_ controller: MenuBarController)
 }
 
 // MARK: - Controller
 
-/// Creates and manages the `NSStatusItem` for Glazer AI.
 @MainActor
 final class MenuBarController {
 
-    // MARK: - Properties
-
-    /// Notified when the user selects a menu action.
     weak var delegate: MenuBarControllerDelegate?
 
     private let statusItem: NSStatusItem
 
-    // MARK: - Init
-
-    /// Installs the status item in the system menu bar.
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         configureButton()
-        configureMenu()
     }
 
     // MARK: - Private
@@ -48,44 +43,58 @@ final class MenuBarController {
             bundledIcon.isTemplate = true
             button.image = bundledIcon
         } else if let sfIcon = NSImage(systemSymbolName: Constants.menuBarSymbolName,
-                                       accessibilityDescription: "Glazer AI") {
+                                       accessibilityDescription: "GlazerAI") {
             sfIcon.size = iconSize
             sfIcon.isTemplate = true
             button.image = sfIcon
         }
 
-        button.toolTip = "Glazer AI"
+        button.toolTip = "GlazerAI — Click to snip"
+        button.target = self
+        button.action = #selector(handleClick)
+        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
     }
 
-    private func configureMenu() {
+    @objc private func handleClick(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+
+        if event.type == .rightMouseUp {
+            showContextMenu(from: sender)
+        } else {
+            delegate?.menuBarControllerDidRequestCapture(self)
+        }
+    }
+
+    private func showContextMenu(from button: NSStatusBarButton) {
         let menu = NSMenu()
 
-        let captureItem = NSMenuItem(
-            title: "Capture Region",
-            action: #selector(captureRegion),
-            keyEquivalent: ""
-        )
-        captureItem.target = self
-        menu.addItem(captureItem)
+        let historyItem = NSMenuItem(title: "History\u{2026}", action: #selector(openHistory), keyEquivalent: "")
+        historyItem.target = self
+        menu.addItem(historyItem)
 
         menu.addItem(.separator())
 
-        let quitItem = NSMenuItem(
-            title: "Quit Glazer AI",
-            action: #selector(quitApp),
-            keyEquivalent: "q"
-        )
-        quitItem.keyEquivalentModifierMask = .command
+        let settingsItem = NSMenuItem(title: "Settings\u{2026}", action: #selector(openSettings), keyEquivalent: "")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(.separator())
+
+        let quitItem = NSMenuItem(title: "Quit GlazerAI", action: #selector(quitApp), keyEquivalent: "")
         quitItem.target = self
         menu.addItem(quitItem)
 
         statusItem.menu = menu
+        button.performClick(nil)
+        statusItem.menu = nil   // remove after shown so left-click still fires our action
     }
 
-    // MARK: - Actions
+    @objc private func openHistory() {
+        delegate?.menuBarControllerDidRequestHistory(self)
+    }
 
-    @objc private func captureRegion() {
-        delegate?.menuBarControllerDidRequestCapture(self)
+    @objc private func openSettings() {
+        delegate?.menuBarControllerDidRequestSettings(self)
     }
 
     @objc private func quitApp() {

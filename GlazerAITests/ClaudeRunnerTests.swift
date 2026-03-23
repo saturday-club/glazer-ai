@@ -34,7 +34,7 @@ final class ClaudeRunnerTests: XCTestCase {
 
     func test_claudeError_timeout_hasDescription() {
         let error = ClaudeError.timeout
-        XCTAssertTrue(error.errorDescription?.contains("60 seconds") == true)
+        XCTAssertTrue(error.errorDescription?.contains("120 seconds") == true)
     }
 
     func test_claudeError_executionFailed_includesStderr() {

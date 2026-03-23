@@ -7,49 +7,83 @@ import XCTest
 @MainActor
 final class ResultsViewModelTests: XCTestCase {
 
+    // MARK: - Helpers
+
+    /// A minimal ClaudeResponse with a named profile.
+    private func makeSuccessResponse(name: String = "Jane Doe") -> ClaudeResponse {
+        ClaudeResponse(
+            status: .success,
+            profile: ProfileData(
+                name: name,
+                headline: "Engineer",
+                company: "Acme",
+                location: "SF",
+                connections: "500+",
+                about: "About text",
+                experience: ["Acme — Engineer"],
+                education: ["MIT"],
+                skills: ["Swift", "iOS"]
+            ),
+            summary: "A great engineer.",
+            message: nil
+        )
+    }
+
+    // MARK: - Initial State
+
     func test_initialState_isLoading() {
         let viewModel = ResultsViewModel()
         XCTAssertTrue(viewModel.isLoading)
-        XCTAssertNil(viewModel.responseText)
+        XCTAssertNil(viewModel.claudeResponse)
         XCTAssertNil(viewModel.errorMessage)
     }
 
-    func test_successState_exposesResponse() {
+    // MARK: - Success State
+
+    func test_successState_exposesClaudeResponse() {
         let viewModel = ResultsViewModel()
-        viewModel.state = .success(response: "Test response")
+        let response = makeSuccessResponse()
+        viewModel.state = .success(response: response)
 
         XCTAssertFalse(viewModel.isLoading)
-        XCTAssertEqual(viewModel.responseText, "Test response")
+        XCTAssertNotNil(viewModel.claudeResponse)
+        XCTAssertEqual(viewModel.claudeResponse?.profile?.name, "Jane Doe")
         XCTAssertNil(viewModel.errorMessage)
     }
+
+    // MARK: - Error State
 
     func test_errorState_exposesMessage() {
         let viewModel = ResultsViewModel()
         viewModel.state = .error(message: "Something failed")
 
         XCTAssertFalse(viewModel.isLoading)
-        XCTAssertNil(viewModel.responseText)
+        XCTAssertNil(viewModel.claudeResponse)
         XCTAssertEqual(viewModel.errorMessage, "Something failed")
     }
+
+    // MARK: - OCR Text
 
     func test_ocrText_defaultsToEmpty() {
         let viewModel = ResultsViewModel()
         XCTAssertTrue(viewModel.ocrText.isEmpty)
     }
 
-    func test_copyResponse_copiesTextToClipboard() {
+    // MARK: - Copy Response
+
+    func test_copyResponse_copiesFormattedTextToClipboard() {
         let viewModel = ResultsViewModel()
-        viewModel.state = .success(response: "Copy me")
+        viewModel.state = .success(response: makeSuccessResponse(name: "Jane Doe"))
         viewModel.copyResponse()
 
         let clipboard = NSPasteboard.general.string(forType: .string)
-        XCTAssertEqual(clipboard, "Copy me")
+        XCTAssertNotNil(clipboard)
+        XCTAssertTrue(clipboard?.contains("Jane Doe") == true)
     }
 
-    func test_copyResponse_noResponse_doesNothing() {
+    func test_copyResponse_noResponse_doesNotCrash() {
         let viewModel = ResultsViewModel()
-        // Loading state — no response
+        // Loading state — no response; should be a no-op
         viewModel.copyResponse()
-        // No crash — pass
     }
 }

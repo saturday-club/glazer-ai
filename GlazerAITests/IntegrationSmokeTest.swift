@@ -41,7 +41,7 @@ final class IntegrationSmokeTest: XCTestCase {
     func test_promptAssembler_integrationWithOCRText() {
         let assembler = PromptAssembler()
         let ocrText = "What is Swift concurrency?"
-        let prompt = assembler.assemble(ocrText: ocrText)
+        let prompt = assembler.assemble(ocrText: ocrText, candidateProfile: .empty)
 
         XCTAssertTrue(prompt.contains(ocrText))
         XCTAssertFalse(prompt.contains("{ocr_text}"))
@@ -58,9 +58,20 @@ final class IntegrationSmokeTest: XCTestCase {
         XCTAssertEqual(viewModel.ocrText, "Some text")
 
         // Set success
-        viewModel.state = .success(response: "Research results")
+        let response = ClaudeResponse(
+            status: .success,
+            profile: ProfileData(
+                name: "Jane Doe", headline: nil, company: nil, location: nil,
+                connections: nil, about: nil, experience: nil, education: nil, skills: nil
+            ),
+            research: nil,
+            iceBreakerNote: nil,
+            summary: "Research results",
+            message: nil
+        )
+        viewModel.state = .success(response: response)
         XCTAssertFalse(viewModel.isLoading)
-        XCTAssertEqual(viewModel.responseText, "Research results")
+        XCTAssertNotNil(viewModel.claudeResponse)
     }
 
     // MARK: - Helpers

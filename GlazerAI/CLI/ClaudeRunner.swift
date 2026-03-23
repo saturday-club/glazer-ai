@@ -23,7 +23,7 @@ enum ClaudeError: LocalizedError {
             return "The Claude CLI was not found. "
                 + "Please install it from https://claude.ai/download"
         case .timeout:
-            return "The Claude CLI did not respond within 60 seconds."
+            return "The Claude CLI did not respond within 120 seconds."
         case .executionFailed(let stderr):
             let detail = stderr.isEmpty ? "Unknown error" : stderr
             return "Claude CLI failed: \(detail)"
@@ -31,9 +31,34 @@ enum ClaudeError: LocalizedError {
     }
 }
 
+// MARK: - Output Envelope
+
+private struct ClaudeUsage: Decodable {
+    let inputTokens: Int
+    let outputTokens: Int
+
+    enum CodingKeys: String, CodingKey {
+        case inputTokens  = "input_tokens"
+        case outputTokens = "output_tokens"
+    }
+}
+
+/// The JSON envelope that `claude -p --output-format json` wraps its response in.
+private struct ClaudeOutputEnvelope: Decodable {
+    let isError: Bool
+    let result: String
+    let usage: ClaudeUsage?
+
+    enum CodingKeys: String, CodingKey {
+        case isError = "is_error"
+        case result
+        case usage
+    }
+}
+
 // MARK: - Runner
 
-/// Invokes `claude -p "<prompt>"` and returns the stdout response.
+/// Invokes `claude -p --output-format json "<prompt>"` and returns the inner result text.
 actor ClaudeRunner {
 
     /// Timeout in seconds for the claude process.
@@ -41,27 +66,32 @@ actor ClaudeRunner {
 
     /// Creates a runner with the given timeout.
     /// - Parameter timeoutSeconds: Maximum time to wait for the process. Defaults to 60.
-    init(timeoutSeconds: TimeInterval = 60) {
+    init(timeoutSeconds: TimeInterval = 120) {
         self.timeoutSeconds = timeoutSeconds
     }
 
-    /// Runs the claude CLI with the given prompt and returns the response text.
+    /// Runs the claude CLI with the given prompt and returns the result text.
+    ///
+    /// Uses `--output-format json` so the process output is a structured envelope,
+    /// giving reliable `is_error` detection and clean extraction of the response text.
     ///
     /// - Parameter prompt: The assembled research prompt to send.
-    /// - Returns: The stdout output from claude.
+    /// - Returns: The `result` field from the JSON envelope.
     /// - Throws: ``ClaudeError`` on failure.
     func run(prompt: String) async throws -> String {
         guard let claudePath = await CLIEnvironment.shared.claudePath else {
             throw ClaudeError.notFound
         }
 
-        return try await withCheckedThrowingContinuation { continuation in
+        let raw = try await withCheckedThrowingContinuation { continuation in
             executeProcess(
                 claudePath: claudePath,
                 prompt: prompt,
                 continuation: continuation
             )
         }
+
+        return try extractResult(from: raw)
     }
 
     // MARK: - Private
@@ -72,11 +102,15 @@ actor ClaudeRunner {
         continuation: CheckedContinuation<String, Error>
     ) {
         let process = Process()
+        let stdinPipe = Pipe()
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
 
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-        process.arguments = ["-l", "-c", "\(claudePath) -p \(shellEscape(prompt))"]
+        process.arguments = ["-l", "-c",
+            "\(claudePath) -p --output-format json --allowedTools web_search"
+        ]
+        process.standardInput = stdinPipe
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
 
@@ -90,10 +124,17 @@ actor ClaudeRunner {
 
         do {
             try process.run()
+
+            // Write prompt to stdin then close so the process sees EOF.
+            if let data = prompt.data(using: .utf8) {
+                stdinPipe.fileHandleForWriting.write(data)
+            }
+            stdinPipe.fileHandleForWriting.closeFile()
+
             process.waitUntilExit()
             timeoutItem.cancel()
 
-            let result = readResult(process: process, stdout: stdoutPipe, stderr: stderrPipe)
+            let result = readRawOutput(process: process, stdout: stdoutPipe, stderr: stderrPipe)
             continuation.resume(with: result)
         } catch {
             timeoutItem.cancel()
@@ -103,7 +144,7 @@ actor ClaudeRunner {
         }
     }
 
-    private func readResult(
+    private func readRawOutput(
         process: Process,
         stdout: Pipe,
         stderr: Pipe
@@ -122,9 +163,24 @@ actor ClaudeRunner {
         }
     }
 
-    /// Shell-escapes a string for safe inclusion in a command.
-    private func shellEscape(_ string: String) -> String {
-        let escaped = string.replacingOccurrences(of: "'", with: "'\\''")
-        return "'\(escaped)'"
+    /// Decodes the JSON envelope and returns `result`, or throws if `is_error` is true.
+    private func extractResult(from envelopeJSON: String) throws -> String {
+        let data = Data(envelopeJSON.utf8)
+        let envelope = (try? JSONDecoder().decode(ClaudeOutputEnvelope.self, from: data))
+        guard let env = envelope else {
+            // Fallback: envelope not parseable, return raw text as-is
+            return envelopeJSON.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if env.isError {
+            throw ClaudeError.executionFailed(stderr: env.result)
+        }
+        if let usage = env.usage {
+            SessionUsage.shared.record(
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens
+            )
+        }
+        return env.result
     }
+
 }

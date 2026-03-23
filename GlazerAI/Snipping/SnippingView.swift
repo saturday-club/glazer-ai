@@ -37,15 +37,32 @@ final class SnippingView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
+        setupTrackingArea()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) is not supported — use init(frame:)")
     }
 
+    // MARK: - Public API
+
+    /// Resets all drag state. Call before presenting the overlay for a fresh snip.
+    func reset() {
+        anchorPoint = .zero
+        currentRect = .zero
+        isDragging = false
+        needsDisplay = true
+    }
+
     // MARK: - First Responder
 
     override var acceptsFirstResponder: Bool { true }
+
+    // MARK: - Cursor
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .crosshair)
+    }
 
     // MARK: - Drawing
 
@@ -57,6 +74,11 @@ final class SnippingView: NSView {
         // Full-screen dim layer.
         context.setFillColor(red: 0, green: 0, blue: 0, alpha: Constants.overlayDimOpacity)
         context.fill(bounds)
+
+        // Instruction card (shown until first mouse-down).
+        if !isDragging && currentRect == .zero {
+            drawInstructionCard(in: context)
+        }
 
         guard isDragging else { return }
 
@@ -114,9 +136,14 @@ final class SnippingView: NSView {
 
     // MARK: - Keyboard Events
 
+    /// Handles Escape via the standard AppKit cancel-operation mechanism.
+    override func cancelOperation(_ sender: Any?) {
+        delegate?.snippingViewDidCancel(self)
+    }
+
+    /// Fallback: also handle raw keyDown for systems where cancelOperation is not routed.
     override func keyDown(with event: NSEvent) {
-        // Escape key (keyCode 53) cancels.
-        if event.keyCode == 53 {
+        if event.keyCode == 53 { // Escape
             delegate?.snippingViewDidCancel(self)
         } else {
             super.keyDown(with: event)
@@ -125,15 +152,103 @@ final class SnippingView: NSView {
 
     // MARK: - Private Helpers
 
+    private func setupTrackingArea() {
+        let area = NSTrackingArea(
+            rect: .zero,
+            options: [.activeAlways, .inVisibleRect, .cursorUpdate, .mouseMoved, .mouseEnteredAndExited],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        NSCursor.crosshair.set()
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        NSCursor.crosshair.set()
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        NSCursor.crosshair.set()
+    }
+
     /// Returns the current selection rectangle with positive width and height.
     private func normalisedSelection() -> CGRect {
-        // Use size.width/height — CGRect.width/height return absolute values.
         CGRect(
             x: currentRect.size.width  < 0 ? currentRect.origin.x + currentRect.size.width  : currentRect.origin.x,
             y: currentRect.size.height < 0 ? currentRect.origin.y + currentRect.size.height : currentRect.origin.y,
             width: abs(currentRect.size.width),
             height: abs(currentRect.size.height)
         )
+    }
+
+    // MARK: - Instruction Card
+
+    private typealias TextEntry = (text: NSString, attrs: [NSAttributedString.Key: Any])
+
+    /// Draws a centered instruction card explaining what to do.
+    private func drawInstructionCard(in context: CGContext) {
+        let entries: [TextEntry] = [
+            ("GlazerAI", [.font: NSFont.systemFont(ofSize: 22, weight: .semibold),
+                          .foregroundColor: NSColor.white]),
+            ("Drag to select a LinkedIn profile", [.font: NSFont.systemFont(ofSize: 15, weight: .regular),
+                                                   .foregroundColor: NSColor(white: 0.85, alpha: 1)]),
+            ("Press Esc to cancel", [.font: NSFont.systemFont(ofSize: 12, weight: .regular),
+                                     .foregroundColor: NSColor(white: 0.55, alpha: 1)])
+        ]
+        let sizes = entries.map { $0.text.size(withAttributes: $0.attrs) }
+
+        let lineSpacing: CGFloat = 10
+        let cardPadding: CGFloat = 28
+        let cardWidth  = sizes.map(\.width).max()! + cardPadding * 2
+        let cardHeight = sizes.map(\.height).reduce(0, +)
+                       + lineSpacing * CGFloat(sizes.count - 1) + cardPadding * 2
+
+        let cardRect = CGRect(
+            x: (bounds.width  - cardWidth)  / 2,
+            y: (bounds.height - cardHeight) / 2,
+            width: cardWidth,
+            height: cardHeight
+        )
+
+        let layout = CardLayout(rect: cardRect, lineSpacing: lineSpacing, padding: cardPadding)
+        drawCardBackground(rect: cardRect, in: context)
+        drawCardText(entries: entries, sizes: sizes, layout: layout, in: context)
+    }
+
+    private func drawCardBackground(rect: CGRect, in context: CGContext) {
+        let path = CGMutablePath()
+        path.addRoundedRect(in: rect, cornerWidth: 14, cornerHeight: 14)
+        context.setFillColor(CGColor(red: 0.12, green: 0.12, blue: 0.14, alpha: 0.92))
+        context.addPath(path)
+        context.fillPath()
+        context.setStrokeColor(CGColor(red: 1, green: 1, blue: 1, alpha: 0.12))
+        context.setLineWidth(1)
+        context.addPath(path)
+        context.strokePath()
+    }
+
+    private struct CardLayout {
+        let rect: CGRect
+        let lineSpacing: CGFloat
+        let padding: CGFloat
+    }
+
+    private func drawCardText(entries: [TextEntry], sizes: [CGSize], layout: CardLayout, in context: CGContext) {
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+
+        var yPos = layout.rect.maxY - layout.padding
+        for (entry, size) in zip(entries, sizes) {
+            yPos -= size.height
+            let origin = CGPoint(x: layout.rect.minX + (layout.rect.width - size.width) / 2, y: yPos)
+            entry.text.draw(at: origin, withAttributes: entry.attrs)
+            yPos -= layout.lineSpacing
+        }
+
+        NSGraphicsContext.restoreGraphicsState()
     }
 
     /// Draws an integer W×H label near the bottom-right of `rect`.

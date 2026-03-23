@@ -38,7 +38,7 @@ final class ResultsWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Glazer AI \u{2014} Results"
+        window.title = "GlazerAI \u{2014} Results"
         window.contentView = hostingView
         window.center()
         window.isReleasedWhenClosed = false
@@ -48,5 +48,11 @@ final class ResultsWindowController {
 
         // Bring the app to front so the results window is visible
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Closes the results window if it is open.
+    func close() {
+        window?.close()
+        window = nil
     }
 }

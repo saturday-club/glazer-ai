@@ -26,7 +26,7 @@ enum ScreenCaptureError: LocalizedError {
         switch self {
         case .permissionDenied:
             // swiftlint:disable:next line_length
-            return "Screen Recording permission is required. Go to System Settings → Privacy & Security → Screen Recording and enable Glazer AI, then try again."
+            return "Screen Recording permission is required. Go to System Settings → Privacy & Security → Screen Recording and enable GlazerAI, then try again."
         case .invalidRect:
             return "The selected region is too small to capture."
         case .captureFailure:

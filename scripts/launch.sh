@@ -29,5 +29,10 @@ if [[ "${1:-}" == "--reset" ]]; then
   tccutil reset ScreenCapture "$BUNDLE_ID"
 fi
 
-echo "Launching $APP"
-open "$APP"
+if [[ "${1:-}" == "--debug" || "${2:-}" == "--debug" ]]; then
+  echo "Launching $APP (debug mode)"
+  open "$APP" --args --debug
+else
+  echo "Launching $APP"
+  open "$APP"
+fi

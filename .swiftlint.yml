@@ -15,6 +15,14 @@ opt_in_rules:
 
 disabled_rules: []
 
+identifier_name:
+  excluded:
+    - db
+    - id
+    - vm
+    - jd
+    - n
+
 line_length:
   warning: 120
   error: 200
