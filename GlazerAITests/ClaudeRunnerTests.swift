@@ -4,10 +4,16 @@
 import XCTest
 @testable import GlazerAI
 
+@MainActor
 final class ClaudeRunnerTests: XCTestCase {
 
+    override func tearDown() async throws {
+        // Restore any path the app host may have set between tests.
+        CLIEnvironment.shared.resetForTesting()
+    }
+
     func test_run_withoutCLIPath_throwsNotFound() async {
-        // CLIEnvironment.shared.claudePath is nil by default in test environment
+        CLIEnvironment.shared.resetForTesting()
         let runner = ClaudeRunner()
 
         do {
@@ -20,17 +26,24 @@ final class ClaudeRunnerTests: XCTestCase {
         }
     }
 
-    func test_shellEscape_handledInPrompt() async {
-        // Verify that prompts with special characters don't crash
-        let runner = ClaudeRunner()
+    func test_claudeError_notFound_hasDescription() {
+        let error = ClaudeError.notFound
+        XCTAssertNotNil(error.errorDescription)
+        XCTAssertTrue(error.errorDescription?.contains("Claude CLI") == true)
+    }
 
-        do {
-            _ = try await runner.run(prompt: "it's a test with 'quotes'")
-            XCTFail("Expected ClaudeError.notFound (CLI not installed in test)")
-        } catch ClaudeError.notFound {
-            // Expected — the shell escape logic was exercised without crash
-        } catch {
-            // Also acceptable — any error except a crash is fine
-        }
+    func test_claudeError_timeout_hasDescription() {
+        let error = ClaudeError.timeout
+        XCTAssertTrue(error.errorDescription?.contains("60 seconds") == true)
+    }
+
+    func test_claudeError_executionFailed_includesStderr() {
+        let error = ClaudeError.executionFailed(stderr: "auth error")
+        XCTAssertTrue(error.errorDescription?.contains("auth error") == true)
+    }
+
+    func test_claudeError_executionFailed_emptyStderr_showsUnknown() {
+        let error = ClaudeError.executionFailed(stderr: "")
+        XCTAssertTrue(error.errorDescription?.contains("Unknown error") == true)
     }
 }

@@ -25,6 +25,13 @@ final class CLIEnvironment {
 
     private init() {}
 
+    // MARK: - Testing Support
+
+    /// Clears the cached path. Used in unit tests to simulate a missing CLI.
+    func resetForTesting() {
+        claudePath = nil
+    }
+
     // MARK: - Public API
 
     /// Attempts to locate `claude` on `$PATH` via `/usr/bin/which`.
@@ -45,15 +52,32 @@ final class CLIEnvironment {
 
     // MARK: - Private
 
-    /// Runs `which claude` to find the binary path.
+    /// Runs `which claude` to find the binary path, with fallbacks for common install locations.
     private func locateClaude() async -> String? {
+        // Try interactive+login shell first — sources both .zprofile and .zshrc,
+        // so user PATH additions in either file are visible.
+        if let path = await whichClaude(shellArgs: ["-i", "-l", "-c", "which claude 2>/dev/null"]) {
+            return path
+        }
+
+        // Fallback: check well-known install paths directly without spawning a shell.
+        let home = NSHomeDirectory()
+        let candidates = [
+            "\(home)/.local/bin/claude",
+            "\(home)/.claude/bin/claude",
+            "/usr/local/bin/claude",
+            "/opt/homebrew/bin/claude",
+        ]
+        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    private func whichClaude(shellArgs: [String]) async -> String? {
         await withCheckedContinuation { continuation in
             let process = Process()
             let pipe = Pipe()
 
-            // Use login shell to inherit user's PATH
             process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-            process.arguments = ["-l", "-c", "which claude"]
+            process.arguments = shellArgs
             process.standardOutput = pipe
             process.standardError = FileHandle.nullDevice
 

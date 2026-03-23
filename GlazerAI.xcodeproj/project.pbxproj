@@ -303,6 +303,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					07786F7F87305ACFD8CD5205 = {
+						DevelopmentTeam = 5MFAHP7Z2N;
+					};
 					9D7FAD00D74A48DD0CBCD46C = {
 						DevelopmentTeam = 5MFAHP7Z2N;
 						ProvisioningStyle = Automatic;
@@ -423,6 +426,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 5MFAHP7Z2N;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -605,6 +609,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 5MFAHP7Z2N;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

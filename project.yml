@@ -57,5 +57,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.glazerai.tests
+        DEVELOPMENT_TEAM: 5MFAHP7Z2N
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
