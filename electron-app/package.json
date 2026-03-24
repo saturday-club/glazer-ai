@@ -19,7 +19,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
     "screenshot-desktop": "^1.15.0",
     "sharp": "^0.33.5",
     "tesseract.js": "^5.1.1"

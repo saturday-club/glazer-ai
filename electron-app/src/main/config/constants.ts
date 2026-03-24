@@ -32,12 +32,8 @@ export const Constants = {
   /** Global keyboard shortcut accelerator. */
   shortcutAccelerator: 'CommandOrControl+Shift+2',
 
-  /** Anthropic API defaults. */
-  anthropic: {
-    defaultModel: 'claude-sonnet-4-20250514',
-    maxTokens: 4096,
-    timeoutMs: 60_000,
-  },
+  /** Claude CLI timeout in milliseconds. */
+  claudeTimeoutMs: 120_000,
 
   /** Default research prompt template. */
   defaultPromptTemplate:
@@ -53,11 +49,4 @@ export const Constants = {
     '- State facts directly. No filler, no hedging.\n\n' +
     '{ocr_text}',
 
-  /** Vision mode prompt (sent with the image). */
-  visionPromptTemplate:
-    'Analyze this screenshot. Provide a direct, well-structured summary ' +
-    'with key facts and relevant context.\n\n' +
-    'Anti-slop rules: no adverbs, no throat-clearing openers, no business jargon, ' +
-    'no vague emphasis, no false agency, active voice only. ' +
-    'State facts directly. No filler.',
 } as const;
