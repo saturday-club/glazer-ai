@@ -85,26 +85,48 @@ extension ClaudeResponse {
     /// that some Claude versions emit even when instructed not to.
     static func parse(from raw: String) throws -> ClaudeResponse {
         let json = stripMarkdownFences(from: raw)
+        print("[GlazerAI] Raw Claude output (\(raw.count) chars): \(raw.prefix(300))")
+        print("[GlazerAI] Extracted JSON (\(json.count) chars): \(json.prefix(300))")
+
+        guard !json.isEmpty else {
+            throw ParseError.invalidJSON("Claude returned empty response")
+        }
         guard let data = json.data(using: .utf8) else {
             throw ParseError.invalidJSON("Could not encode string as UTF-8")
         }
         do {
             return try JSONDecoder().decode(ClaudeResponse.self, from: data)
         } catch {
+            print("[GlazerAI] JSON decode error: \(error)")
             throw ParseError.invalidJSON(error.localizedDescription)
         }
     }
 
     // MARK: - Private Helpers
 
+    /// Extracts the JSON object from Claude's response, handling markdown fences,
+    /// prose before/after the JSON, and other formatting Claude may add.
     private static func stripMarkdownFences(from raw: String) -> String {
-        var trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.hasPrefix("```") {
-            let lines = trimmed.components(separatedBy: "\n")
-            trimmed = lines.dropFirst().dropLast()
+        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Strip markdown code fences if present.
+        if text.hasPrefix("```") {
+            let lines = text.components(separatedBy: "\n")
+            text = lines.dropFirst().dropLast()
                 .joined(separator: "\n")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return trimmed
+
+        // If the result already starts with '{', use it directly.
+        if text.hasPrefix("{") {
+            return text
+        }
+
+        // Otherwise, find the first '{' and last '}' and extract the JSON object.
+        guard let openBrace = text.firstIndex(of: "{"),
+              let closeBrace = text.lastIndex(of: "}") else {
+            return text
+        }
+        return String(text[openBrace...closeBrace])
     }
 }

@@ -95,6 +95,17 @@ final class CLIEnvironment {
             process.standardOutput = pipe
             process.standardError = FileHandle.nullDevice
 
+            // Ensure HOME and PATH are set for apps launched from Finder.
+            let home = NSHomeDirectory()
+            var env = ProcessInfo.processInfo.environment
+            env["HOME"] = home
+            env["PATH"] = (env["PATH"] ?? "")
+                + ":\(home)/.local/bin"
+                + ":/usr/local/bin"
+                + ":/opt/homebrew/bin"
+            process.environment = env
+            process.currentDirectoryURL = URL(fileURLWithPath: home)
+
             do {
                 try process.run()
                 process.waitUntilExit()

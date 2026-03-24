@@ -108,11 +108,25 @@ actor ClaudeRunner {
 
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-l", "-c",
-            "\(claudePath) -p --output-format json --allowedTools web_search"
+            "\(claudePath) -p --output-format json --model sonnet"
         ]
         process.standardInput = stdinPipe
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
+
+        // Ensure the process has a proper HOME and PATH so claude can
+        // find its config and auth tokens. Apps launched from Finder
+        // get a minimal environment that may lack these.
+        let home = NSHomeDirectory()
+        var env = ProcessInfo.processInfo.environment
+        env["HOME"] = home
+        env["PATH"] = (env["PATH"] ?? "")
+            + ":\(home)/.local/bin"
+            + ":/usr/local/bin"
+            + ":/opt/homebrew/bin"
+        env["TERM"] = "xterm-256color"
+        process.environment = env
+        process.currentDirectoryURL = URL(fileURLWithPath: home)
 
         let timeoutItem = DispatchWorkItem { [weak process] in
             process?.terminate()
@@ -157,7 +171,12 @@ actor ClaudeRunner {
         if process.terminationReason == .uncaughtSignal {
             return .failure(ClaudeError.timeout)
         } else if process.terminationStatus != 0 {
-            return .failure(ClaudeError.executionFailed(stderr: stderrStr))
+            // Log both stdout and stderr for debugging.
+            let detail = stderrStr.isEmpty ? stdoutStr : stderrStr
+            print("[GlazerAI] claude -p failed (exit \(process.terminationStatus))")
+            print("[GlazerAI] stdout: \(stdoutStr.prefix(500))")
+            print("[GlazerAI] stderr: \(stderrStr.prefix(500))")
+            return .failure(ClaudeError.executionFailed(stderr: detail))
         } else {
             return .success(stdoutStr)
         }
