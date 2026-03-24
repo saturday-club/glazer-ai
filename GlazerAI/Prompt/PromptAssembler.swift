@@ -16,73 +16,64 @@ struct PromptAssembler: Sendable {
 
     // swiftlint:disable line_length
     /// LinkedIn research + ice-breaker prompt template.
-    ///
-    /// Claude is instructed to:
-    /// 1. Extract the person's identity from the OCR text.
-    /// 2. Web-search them to gather research beyond the screenshot.
-    /// 3. Generate a personalised, genuine ice-breaker (≤ 300 chars).
-    /// 4. Return everything as strict JSON — no markdown, no prose outside JSON.
     static let defaultTemplate: String = """
-    You are a professional research assistant and outreach specialist. Your task is to research a LinkedIn profile and craft a personalised connection note.
+    Extract the LinkedIn profile from the OCR text below. Then write a connection note.
 
-    ## SENDER (the person sending the connection request)
+    ## SENDER
     {candidate_profile}
 
-    ## INSTRUCTIONS
+    ## TASK
+    1. Parse the OCR text for: name, headline, company, location, about, experience, education, skills.
+    2. Write a connection note (max 300 chars) that sounds like a real person texting, not a LinkedIn bot.
 
-    **Step 1 — Extract profile from OCR text**
-    Parse the OCR text below to identify the target person's: name, headline, company, location, connections count, about section, experience, education, and skills.
+    ## HOW THE NOTE MUST SOUND
+    Write it like a warm DM to someone you think is cool and want to grab coffee with. Be genuine. Compliment something specific they did. Show you paid attention. Then ask a real question.
 
-    **Step 2 — Web research**
-    Use web_search to find additional information about this person beyond what is in the screenshot. Search for:
-    - Recent articles, blog posts, or interviews they have published or appeared in
-    - Open-source projects or GitHub activity
-    - Conference talks, podcasts, or public appearances
-    - Company news or product launches they are associated with
-    - Any notable professional achievements or recognition
+    The tone should feel like: "hey, what you're doing is sick, here's why I think so, can we talk about X?"
 
-    **Step 3 — Generate ice-breaker**
-    Write a LinkedIn connection note from the sender to the target. Rules:
-    - MUST be 300 characters or fewer (LinkedIn's connection note limit)
-    - Must reference something SPECIFIC about the target (a project, post, talk, or shared interest) — never generic
-    - Should feel warm and human, not salesy or templated
-    - Mention a genuine reason for connecting based on the sender's background
-    - Do NOT use emojis
+    FORMATTING:
+    - No dashes (not -- or -) to join clauses. Use periods or commas instead.
+    - No semicolons. Keep sentences simple.
+    - 2 to 4 sentences max. Each one earns its place.
 
-    **Step 4 — Return JSON**
-    Respond with ONLY valid JSON. No markdown fences. No text before or after the JSON.
+    BANNED (instant reject):
+    - "Happy to connect" / "Love to connect" / "Excited to connect"
+    - "I came across" / "I noticed" / "I was impressed by"
+    - Any -ly adverb (genuinely, truly, really, deeply, highly)
+    - "Innovative" / "impressive" / "passionate" / "synergies" / "landscape"
+    - "At the intersection of" / "in the space of"
+    - Starting with your own credentials ("MS Data Science here", "As a fellow...")
+    - Ending with a generic ask ("Would love to chat", "Let's connect")
+    - Using dashes to connect thoughts ("AI marketing + consumer behavior" is fine, but "I work on ML -- pattern recognition maps onto..." is not)
 
-    If the OCR text does NOT contain a LinkedIn profile, return:
-    {"status":"no_profile_found","profile":null,"research":null,"iceBreakerNote":null,"summary":null,"message":"The captured text does not appear to contain a LinkedIn profile."}
+    REQUIRED:
+    - Open with something specific about THEM that shows you looked at their profile
+    - Include a genuine compliment about their work, role, or an achievement (glaze them a little, but make it specific and earned, not generic flattery)
+    - Say briefly why it caught your attention from your perspective
+    - End with a concrete question they'd want to answer
 
-    If the OCR text DOES contain a LinkedIn profile, return:
-    {
-      "status": "success",
-      "profile": {
-        "name": "...",
-        "headline": "...",
-        "company": "...",
-        "location": "...",
-        "connections": "...",
-        "about": "...",
-        "experience": ["..."],
-        "education": ["..."],
-        "skills": ["..."]
-      },
-      "research": {
-        "recentActivity": ["brief description of each finding"],
-        "publications": ["title or description"],
-        "companyContext": "1-2 sentences about their company",
-        "conversationAngles": ["specific angle 1", "specific angle 2"]
-      },
-      "iceBreakerNote": "The connection note, max 300 chars",
-      "summary": "2-3 sentence narrative about who this person is and why they are interesting",
-      "message": null
-    }
+    GOOD:
+    "The AMA exec VP role while doing consumer behavior research is a wild combo. Not many people run a marketing org and study the science behind it at the same time. I work on ML at IU and keep running into behavioral modeling questions. How are you using AI tools for AMA campaigns?"
 
-    Use null for any field that cannot be determined.
+    "Love that you're bridging brand strategy with AI marketing at Kelley. That crossover barely existed two years ago. I do ML research at IU and the consumer behavior side keeps pulling me in. What got you into the AI angle?"
 
-    ## OCR TEXT FROM SCREENSHOT
+    BAD:
+    "Hi Manya, MS Data Science at IU here. I apply ML to brain imaging, but consumer behavior modeling uses the same toolkit. Happy to connect."
+
+    "AMA VP + consumer behavior + AI is an unusual stack for Kelley. I work on ML for brain imaging at IU -- pattern recognition there maps onto behavioral modeling in ways I didn't expect. What AI tools are you running for AMA campaigns?"
+
+    ## RETURN FORMAT
+    Respond with ONLY valid JSON. No markdown fences.
+
+    If no LinkedIn profile found:
+    {"status":"no_profile_found","profile":null,"research":null,"iceBreakerNote":null,"summary":null,"message":"No LinkedIn profile detected."}
+
+    If found:
+    {"status":"success","profile":{"name":"...","headline":"...","company":"...","location":"...","connections":"...","about":"...","experience":["..."],"education":["..."],"skills":["..."]},"research":{"recentActivity":["..."],"publications":["..."],"companyContext":"...","conversationAngles":["..."]},"iceBreakerNote":"...","summary":"...","message":null}
+
+    Null for unknown fields. Keep summary to 1-2 plain sentences.
+
+    ## OCR TEXT
     {ocr_text}
     """
     // swiftlint:enable line_length
@@ -92,22 +83,18 @@ struct PromptAssembler: Sendable {
 
     // swiftlint:disable line_length
     static let iceBreakerRefinementTemplate: String = """
-    You are a professional outreach specialist. Rewrite the LinkedIn connection note below to better align with the following job description.
+    Rewrite the connection note to fit this job description. Same voice rules: short, specific, human. No corporate speak, no adverbs, no "happy to connect."
 
     ## SENDER
     {candidate_profile}
 
-    ## TARGET PROFILE SUMMARY
+    ## TARGET
     {profile_summary}
 
-    ## JOB DESCRIPTION
+    ## JOB
     {job_description}
 
-    ## RULES
-    - MUST be 300 characters or fewer
-    - Reference something specific from their background that relates to the job description
-    - Feel warm, human, not salesy
-    - No emojis
+    Max 300 chars. Reference something specific from their background that relates to the job. End with a concrete question or offer.
 
     Respond with ONLY valid JSON (no markdown fences):
     {"status":"success","iceBreakerNote":"...","message":null}

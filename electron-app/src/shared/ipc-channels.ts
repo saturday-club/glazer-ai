@@ -13,10 +13,4 @@ export const IPC = {
   // Results -> Main
   COPY_TO_CLIPBOARD: 'clipboard:copy',
   CLOSE_WINDOW: 'window:close',
-
-  // Settings
-  GET_API_KEY: 'settings:get-api-key',
-  SET_API_KEY: 'settings:set-api-key',
-  GET_CAPTURE_MODE: 'settings:get-capture-mode',
-  SET_CAPTURE_MODE: 'settings:set-capture-mode',
 } as const;

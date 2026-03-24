@@ -34,6 +34,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var debugConsole: DebugConsoleWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Set activation policy FIRST, before anything else.
+        // .accessory = menu bar app, no Dock icon, but can bring windows to front.
+        // Must be set here, not in AppCoordinator. Matches AutoLog pattern.
+        NSApp.setActivationPolicy(.accessory)
+
         if CommandLine.arguments.contains("--debug") {
             DebugLogger.shared.isEnabled = true
             let console = DebugConsoleWindowController()
@@ -42,8 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             debugLog("Debug mode enabled", tag: "App")
         }
 
-        // Note: activation policy is set to .accessory inside AppCoordinator
-        // after the permission prompt completes, so we do NOT set it here.
         coordinator = AppCoordinator()
     }
 

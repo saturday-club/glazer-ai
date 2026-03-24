@@ -1,13 +1,12 @@
 import { ipcMain, dialog, clipboard, BrowserWindow } from 'electron';
 import { IPC } from '../shared/ipc-channels';
-import type { CaptureRect, CaptureMode } from '../shared/types';
+import type { CaptureRect } from '../shared/types';
 import { captureRegion } from './services/screen-capture';
 import { recognizeText } from './services/ocr-service';
 import { assemblePrompt } from './services/prompt-assembler';
-import { queryWithText, queryWithVision } from './services/anthropic-client';
+import { runClaude, findClaudePath } from './services/claude-runner';
 import { createResultsWindow } from './windows/results-window';
 import { Constants } from './config/constants';
-import store from './config/store';
 
 /** Tracks open results windows to prevent garbage collection. */
 const resultsWindows: Set<BrowserWindow> = new Set();
@@ -39,28 +38,19 @@ export function registerIPCHandlers(): void {
       win.close();
     }
   });
-
-  // Settings handlers.
-  ipcMain.handle(IPC.GET_API_KEY, () => store.get('apiKey'));
-  ipcMain.handle(IPC.SET_API_KEY, (_event, key: string) => {
-    store.set('apiKey', key);
-  });
-  ipcMain.handle(IPC.GET_CAPTURE_MODE, () => store.get('captureMode'));
-  ipcMain.handle(IPC.SET_CAPTURE_MODE, (_event, mode: CaptureMode) => {
-    store.set('captureMode', mode);
-  });
 }
 
 /**
- * Runs the full pipeline: capture -> OCR/Vision -> Claude -> results.
+ * Runs the full pipeline: capture -> OCR -> claude -p -> results.
  * Mirrors AppCoordinator.runPipeline() from the Swift version.
  */
 async function runPipeline(rect: CaptureRect): Promise<void> {
-  const apiKey = store.get('apiKey');
-  if (!apiKey) {
+  // Check that claude CLI is available.
+  const claudePath = findClaudePath();
+  if (!claudePath) {
     dialog.showErrorBox(
       'Glazer AI',
-      'No API key configured. Open Settings from the tray menu and enter your Anthropic API key.'
+      'Claude CLI not found. Install it from https://claude.ai/download'
     );
     return;
   }
@@ -93,27 +83,17 @@ async function runPipeline(rect: CaptureRect): Promise<void> {
     const imageBase64 = pngBuffer.toString('base64');
     sendUpdate(IPC.PIPELINE_IMAGE, imageBase64);
 
-    const captureMode: CaptureMode = store.get('captureMode') || 'ocr';
+    // Step 2: OCR.
+    const ocrText = await recognizeText(pngBuffer);
+    sendUpdate(IPC.PIPELINE_OCR, ocrText);
 
-    if (captureMode === 'vision') {
-      // Vision mode: send image directly to Claude.
-      const response = await queryWithVision(
-        imageBase64,
-        Constants.visionPromptTemplate,
-        { apiKey }
-      );
-      sendUpdate(IPC.PIPELINE_RESPONSE, response);
-    } else {
-      // OCR mode: extract text, then query Claude.
-      const ocrText = await recognizeText(pngBuffer);
-      sendUpdate(IPC.PIPELINE_OCR, ocrText);
+    // Step 3: Assemble prompt.
+    const prompt = assemblePrompt(ocrText);
+    console.log(`[Glazer AI] Prompt assembled (${prompt.length} chars)`);
 
-      const prompt = assemblePrompt(ocrText);
-      console.log(`[Glazer AI] Prompt assembled (${prompt.length} chars)`);
-
-      const response = await queryWithText(prompt, { apiKey });
-      sendUpdate(IPC.PIPELINE_RESPONSE, response);
-    }
+    // Step 4: Run claude -p.
+    const response = await runClaude(prompt);
+    sendUpdate(IPC.PIPELINE_RESPONSE, response);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred.';

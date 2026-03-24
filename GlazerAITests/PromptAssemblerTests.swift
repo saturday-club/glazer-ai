@@ -62,4 +62,30 @@ final class PromptAssemblerTests: XCTestCase {
     func test_defaultTemplate_containsCandidatePlaceholder() {
         XCTAssertTrue(PromptAssembler.defaultTemplate.contains("{candidate_profile}"))
     }
+
+    func test_defaultTemplate_containsAntiSlopRules() {
+        let template = PromptAssembler.defaultTemplate
+        XCTAssertTrue(template.contains("Anti-slop rules"))
+        XCTAssertTrue(template.contains("No throat-clearing"))
+        XCTAssertTrue(template.contains("No adverbs"))
+        XCTAssertTrue(template.contains("No business jargon"))
+        XCTAssertTrue(template.contains("No false agency"))
+        XCTAssertTrue(template.contains("Active voice only"))
+    }
+
+    func test_refinementTemplate_containsAntiSlopRules() {
+        let template = PromptAssembler.iceBreakerRefinementTemplate
+        XCTAssertTrue(template.contains("ANTI-SLOP"))
+        XCTAssertTrue(template.contains("No adverbs"))
+        XCTAssertTrue(template.contains("No business jargon"))
+        XCTAssertTrue(template.contains("No false agency"))
+    }
+
+    func test_defaultTemplate_containsGoodAndBadExamples() {
+        let template = PromptAssembler.defaultTemplate
+        XCTAssertTrue(template.contains("Good ice-breaker example"))
+        XCTAssertTrue(template.contains("Bad ice-breaker example"))
+        XCTAssertTrue(template.contains("SIGMOD"))
+        XCTAssertTrue(template.contains("synergies"))
+    }
 }

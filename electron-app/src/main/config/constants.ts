@@ -32,21 +32,21 @@ export const Constants = {
   /** Global keyboard shortcut accelerator. */
   shortcutAccelerator: 'CommandOrControl+Shift+2',
 
-  /** Anthropic API defaults. */
-  anthropic: {
-    defaultModel: 'claude-sonnet-4-20250514',
-    maxTokens: 4096,
-    timeoutMs: 60_000,
-  },
+  /** Claude CLI timeout in milliseconds. */
+  claudeTimeoutMs: 120_000,
 
   /** Default research prompt template. */
   defaultPromptTemplate:
-    'The following text was extracted from a screenshot. ' +
-    'Please research this topic thoroughly and provide a concise, ' +
-    'well-structured summary with key facts and relevant context:\n\n{ocr_text}',
+    'You are a research assistant. Analyze the text below extracted from a screenshot.\n\n' +
+    'Provide a direct, well-structured summary with key facts and relevant context.\n\n' +
+    'Anti-slop rules for your response:\n' +
+    '- No adverbs (no -ly words, no "really", "just", "genuinely")\n' +
+    '- No throat-clearing ("Here\'s the thing", "It turns out", "Let me be clear")\n' +
+    '- No business jargon ("navigate", "landscape", "lean into", "deep dive")\n' +
+    '- No vague emphasis ("This matters because", "Make no mistake")\n' +
+    '- No false agency (objects doing human actions)\n' +
+    '- Active voice only. Name who does what.\n' +
+    '- State facts directly. No filler, no hedging.\n\n' +
+    '{ocr_text}',
 
-  /** Vision mode prompt (sent with the image). */
-  visionPromptTemplate:
-    'Analyze this screenshot. Research the topic shown thoroughly and provide ' +
-    'a concise, well-structured summary with key facts and relevant context.',
 } as const;

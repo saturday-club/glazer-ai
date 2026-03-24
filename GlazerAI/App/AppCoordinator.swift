@@ -7,7 +7,6 @@
 
 import AppKit
 import Foundation
-import ScreenCaptureKit
 
 /// Owns and coordinates all major Glazer AI subsystems.
 @MainActor
@@ -90,13 +89,9 @@ final class AppCoordinator {
     }
 
     private func requestPermissionsOnLaunch() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-
-        Task.detached {
-            _ = try? await SCShareableContent.current
-            _ = await MainActor.run { NSApp.setActivationPolicy(.accessory) }
-        }
+        // No CG permission APIs called. We use /usr/sbin/screencapture which is
+        // pre-authorized on all macOS systems. Activation policy is already set
+        // to .accessory in AppDelegate before this point.
     }
 
     private func checkClaudeCLI() {
@@ -128,11 +123,14 @@ final class AppCoordinator {
 
     // MARK: - Pipeline
 
-    /// Runs the full pipeline: capture → OCR → prompt → claude → results.
+    /// Runs the full pipeline: capture -> OCR -> prompt -> claude -> results.
     private func runPipeline(rect: CGRect) {
         let profile = candidateProfile
         Task {
             do {
+                // Delay so the snipping overlay is fully off-screen
+                // before screencapture grabs the display. close() is async.
+                try await Task.sleep(nanoseconds: 300_000_000) // 300ms
                 let imageData = try await captureService.capture(rect: rect)
                 debugCopyToClipboard(imageData)
 

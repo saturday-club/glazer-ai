@@ -1,36 +1,32 @@
 // ScreenCaptureService.swift
 // GlazerAI
 //
-// Captures a screen region using ScreenCaptureKit (macOS 14+).
-// Excludes the Glazer AI overlay from the captured content.
+// Captures a screen region using the system `screencapture` CLI tool.
+// Approach (from AutoLog/contextd):
+// 1. Full-screen capture with `screencapture -x -t png <path>`
+// 2. Crop to user's rect using CGImage.cropping(to:)
+// Never call CG permission APIs or ScreenCaptureKit.
 
 import AppKit
 import CoreGraphics
 import Foundation
-import ScreenCaptureKit
 
 // MARK: - Errors
 
-/// Errors produced by ``ScreenCaptureService``.
 enum ScreenCaptureError: LocalizedError {
-    /// Screen Recording permission has not been granted.
-    case permissionDenied
-    /// The provided rectangle had zero or negative area after normalisation.
     case invalidRect
-    /// Could not find a matching display or SCShareableContent failed.
     case captureFailure
-    /// PNG conversion of the captured image failed.
+    case cropFailure
     case pngConversionFailure
 
     var errorDescription: String? {
         switch self {
-        case .permissionDenied:
-            // swiftlint:disable:next line_length
-            return "Screen Recording permission is required. Go to System Settings → Privacy & Security → Screen Recording and enable GlazerAI, then try again."
         case .invalidRect:
             return "The selected region is too small to capture."
         case .captureFailure:
-            return "Screen capture failed."
+            return "Screen capture failed. Check Screen Recording permission in System Settings."
+        case .cropFailure:
+            return "Failed to crop the captured image to the selected region."
         case .pngConversionFailure:
             return "Failed to encode the captured image as PNG."
         }
@@ -39,67 +35,82 @@ enum ScreenCaptureError: LocalizedError {
 
 // MARK: - Service
 
-/// Captures a user-defined rectangular region of the screen and returns PNG data.
-///
-/// Uses `SCScreenshotManager` (ScreenCaptureKit) for proper permission integration
-/// and to exclude the Glazer AI overlay window from the captured content.
 final class ScreenCaptureService: Sendable {
 
-    // MARK: - Public API
-
-    /// Captures `rect` (AppKit screen coordinates, origin bottom-left of main display)
-    /// and returns PNG-encoded data.
     func capture(rect: CGRect) async throws -> Data {
-        guard CGPreflightScreenCaptureAccess() else {
-            throw ScreenCaptureError.permissionDenied
-        }
-
         let normalised = normalise(rect: rect)
         guard normalised.width  >= Constants.minimumSelectionSize,
               normalised.height >= Constants.minimumSelectionSize else {
             throw ScreenCaptureError.invalidRect
         }
 
-        let content = try await SCShareableContent.current
+        // Step 1: Full-screen capture using screencapture CLI.
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("glazerai-\(UUID().uuidString).png")
+        let tempPath = tempURL.path
 
-        let nsScreen = screen(containing: normalised)
-        let scDisplay = scDisplay(matching: nsScreen, from: content)
+        let fullImage: CGImage = try await Task.detached(priority: .userInitiated) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            process.arguments = ["-x", "-t", "png", tempPath]
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
 
-        // Exclude this app's overlay so it doesn't appear in the screenshot.
-        let ownApp = content.applications.first(where: {
-            $0.bundleIdentifier == Bundle.main.bundleIdentifier
-        })
-        let filter = SCContentFilter(
-            display: scDisplay,
-            excludingApplications: ownApp.map { [$0] } ?? [],
-            exceptingWindows: []
-        )
+            try process.run()
+            process.waitUntilExit()
 
-        let displayRect = rectInDisplayCoordinates(normalised, screen: nsScreen)
-        let scaleFactor = max(1, Int(filter.pointPixelScale))
+            guard process.terminationStatus == 0 else {
+                print("[GlazerAI] screencapture exit code: \(process.terminationStatus)")
+                throw ScreenCaptureError.captureFailure
+            }
 
-        let config = SCStreamConfiguration()
-        config.sourceRect = displayRect
-        config.width = max(1, Int(displayRect.width) * scaleFactor)
-        config.height = max(1, Int(displayRect.height) * scaleFactor)
-        config.colorSpaceName = CGColorSpace.sRGB
-        config.showsCursor = false
+            let fileURL = URL(fileURLWithPath: tempPath)
+            guard FileManager.default.fileExists(atPath: tempPath),
+                  let provider = CGDataProvider(url: fileURL as CFURL),
+                  let cgImage = CGImage(
+                    pngDataProviderSource: provider,
+                    decode: nil,
+                    shouldInterpolate: true,
+                    intent: .defaultIntent
+                  ) else {
+                print("[GlazerAI] Failed to load PNG from \(tempPath)")
+                throw ScreenCaptureError.captureFailure
+            }
 
-        let cgImage = try await SCScreenshotManager.captureImage(
-            contentFilter: filter,
-            configuration: config
-        )
+            try? FileManager.default.removeItem(at: fileURL)
+            return cgImage
+        }.value
 
-        let nsImage = NSImage(cgImage: cgImage, size: normalised.size)
-        guard let pngData = nsImage.pngData() else {
+        // Step 2: Convert AppKit rect to image pixel coords and crop.
+        let cropRect = rectInImageCoordinates(normalised, imageWidth: fullImage.width, imageHeight: fullImage.height)
+
+        // Clamp to image bounds to prevent nil from cropping(to:).
+        let imageBounds = CGRect(x: 0, y: 0, width: fullImage.width, height: fullImage.height)
+        let clampedRect = cropRect.intersection(imageBounds)
+
+        guard !clampedRect.isEmpty,
+              clampedRect.width >= 1,
+              clampedRect.height >= 1,
+              let cropped = fullImage.cropping(to: clampedRect) else {
+            print("[GlazerAI] Crop failed. imageSize=\(fullImage.width)x\(fullImage.height) cropRect=\(cropRect) clamped=\(clampedRect)")
+            throw ScreenCaptureError.cropFailure
+        }
+
+        // Step 3: Encode cropped CGImage directly to PNG (no NSImage round-trip).
+        let mutableData = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(mutableData as CFMutableData, "public.png" as CFString, 1, nil) else {
             throw ScreenCaptureError.pngConversionFailure
         }
-        return pngData
+        CGImageDestinationAddImage(dest, cropped, nil)
+        guard CGImageDestinationFinalize(dest) else {
+            throw ScreenCaptureError.pngConversionFailure
+        }
+
+        return mutableData as Data
     }
 
-    // MARK: - Internal helpers (tested)
+    // MARK: - Internal
 
-    /// Returns the rect with positive width and height.
     func normalise(rect: CGRect) -> CGRect {
         CGRect(
             x: rect.size.width  < 0 ? rect.origin.x + rect.size.width  : rect.origin.x,
@@ -111,37 +122,27 @@ final class ScreenCaptureService: Sendable {
 
     // MARK: - Private
 
-    /// Returns the NSScreen that contains the rect's midpoint (falls back to main).
-    private func screen(containing rect: CGRect) -> NSScreen {
-        let mid = CGPoint(x: rect.midX, y: rect.midY)
-        return NSScreen.screens.first(where: { $0.frame.contains(mid) }) ?? NSScreen.main ?? NSScreen.screens[0]
-    }
+    /// Converts AppKit screen coordinates (origin bottom-left) to image pixel
+    /// coordinates (origin top-left), accounting for Retina scaling.
+    private func rectInImageCoordinates(
+        _ rect: CGRect,
+        imageWidth: Int,
+        imageHeight: Int
+    ) -> CGRect {
+        guard let mainScreen = NSScreen.main else { return rect }
 
-    /// Finds the SCDisplay whose displayID matches `screen`. Falls back to first display.
-    private func scDisplay(matching screen: NSScreen, from content: SCShareableContent) -> SCDisplay {
-        let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
-        return content.displays.first(where: { $0.displayID == id?.uint32Value }) ?? content.displays[0]
-    }
+        let screenFrame = mainScreen.frame
+        let scaleX = CGFloat(imageWidth) / screenFrame.width
+        let scaleY = CGFloat(imageHeight) / screenFrame.height
 
-    /// Converts a rect from AppKit screen coordinates (origin bottom-left) to
-    /// display-local ScreenCaptureKit coordinates (origin top-left of that display).
-    private func rectInDisplayCoordinates(_ rect: CGRect, screen: NSScreen) -> CGRect {
-        let screenH = screen.frame.height + screen.frame.minY
+        // AppKit origin = bottom-left, image origin = top-left.
+        let cgY = screenFrame.height - rect.origin.y - rect.height
+
         return CGRect(
-            x: rect.origin.x - screen.frame.minX,
-            y: screenH - rect.origin.y - rect.height,
-            width: rect.width,
-            height: rect.height
+            x: floor(rect.origin.x * scaleX),
+            y: floor(cgY * scaleY),
+            width: ceil(rect.width * scaleX),
+            height: ceil(rect.height * scaleY)
         )
-    }
-}
-
-// MARK: - NSImage PNG Helper
-
-private extension NSImage {
-    func pngData() -> Data? {
-        guard let tiff   = tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
-        return bitmap.representation(using: .png, properties: [:])
     }
 }

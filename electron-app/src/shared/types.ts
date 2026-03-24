@@ -6,9 +6,6 @@ export interface CaptureRect {
   height: number;
 }
 
-/** Capture mode: OCR extracts text first, vision sends image directly to Claude. */
-export type CaptureMode = 'ocr' | 'vision';
-
 /** Progressive pipeline update sent from main to results renderer. */
 export type PipelineUpdate =
   | { type: 'image'; imageBase64: string }
